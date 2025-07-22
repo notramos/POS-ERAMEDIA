@@ -42,7 +42,6 @@ class TransactionController extends Controller
         $request->validate([
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.unit' => 'required|string',
             'items.*.quantity' => 'required|integer|min:1',
             'paid_amount' => 'required|numeric|min:0',
         ], [
@@ -61,20 +60,19 @@ class TransactionController extends Controller
             Log::info('Mulai proses transaksi');
 
             // Hitung total transaksi
-            $totalAmount = 0;
             $transactionItems = [];
+            $totalAmount = 0;
 
             foreach ($request->items as $item) {
-                if (!isset($item['unit'])) {
-                    throw new \Exception('Unit tidak dikirim untuk salah satu item');
+                $product = Product::with('unit')->findOrFail($item['product_id']); // ambil relasi unit langsung
+
+                $unit = $product->unit;
+                if (!$unit) {
+                    throw new \Exception('Unit tidak ditemukan untuk produk: ' . $product->name);
                 }
-                $product = Product::findOrFail($item['product_id']);
-                $unit = Unit::where('name', $item['unit'])->firstOrFail(); // cari unit by nama
+
                 $quantity = (int) $item['quantity'];
-                $price = $unit->price_per_unit ?? 0;
-                if ($price == 0) {
-                    $price = $product->price;
-                }
+                $price = $unit->price_per_unit ?? $product->price;
                 $subtotal = $price * $quantity;
 
                 $transactionItems[] = [
@@ -127,13 +125,14 @@ class TransactionController extends Controller
             }
 
             DB::commit();
-
             Log::info('Transaksi berhasil di-commit');
-
-            return redirect()
-                ->route('kasir.detail', $transaction->id)
-                ->with('success', 'Transaksi berhasil disimpan dengan total Rp ' . number_format($totalAmount, 0, ',', '.') .
-                    '. Kembalian: Rp ' . number_format($changeAmount, 0, ',', '.'));
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaksi berhasil disimpan',
+                'transaction_id' => $transaction->id,
+                'total' => $totalAmount,
+                'change' => $changeAmount
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
 

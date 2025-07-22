@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\Unit;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 
 class UnitSeeder extends Seeder
@@ -14,11 +14,12 @@ class UnitSeeder extends Seeder
      */
     public function run(): void
     {
-         $units = [
-            ['name' => 'Pcs', 'price_per_unit' => 0],
-        ];
-        foreach ($units as $unit) {
-            Unit::create($unit);
-        }
+        DB::table('units')->insert([
+            ['name' => 'pcs', 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'box', 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'meter', 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'liter', 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'rim', 'created_at' => now(), 'updated_at' => now()],
+        ]);
     }
 }

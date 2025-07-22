@@ -6,10 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Unit extends Model
 {
-     protected $fillable = ['name','price_per_unit'];
+    protected $fillable = ['name'];
 
-     public function transactionDetails()
+    public function transactionDetails()
     {
         return $this->hasMany(TransactionDetail::class);
+    }
+
+    public function product()
+    {
+        return $this->hasMany(Product::class);
     }
 }

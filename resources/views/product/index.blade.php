@@ -394,15 +394,26 @@
                             <div class="card-body d-flex flex-column">
                                 <h5 class="product-title">{{ $product->name }}</h5>
 
+                                <p class="product-stock flex-grow-1">
+                                    <strong>Stok:</strong> {{ $product->stock }}
+                                </p>
 
-                                <p class="product-stock flex-grow-1"><strong>Stok:</strong> {{ $product->stock }}</p>
+                                {{-- Harga per unit --}}
+                                <div class="product-price mb-1">
+                                    Rp {{ number_format($product->price, 0, ',', '.') }} /
+                                    {{ $product->unit->name }}
+                                </div>
 
-                                <div class="product-price">Rp {{ number_format($product->price, 0, ',', '.') }}</div>
+                                {{-- Detail produk --}}
+                                <div class="text-muted small mb-3">
+                                    {{ $product->detail ?? '-' }}
+                                </div>
+
                                 <div class="product-actions mt-auto">
                                     <button class="btn btn-warning-custom btn-action edit-product"
                                         data-id="{{ $product->id }}" data-name="{{ $product->name }}"
-                                        data-stock="{{ $product->stock }}" {{-- [FIX] Memberikan data-stock --}}
-                                        data-price="{{ $product->price }}">
+                                        data-stock="{{ $product->stock }}" data-price="{{ $product->price }}"
+                                        data-unit="{{ $product->unit_id }}" data-detail="{{ $product->detail }}">
                                         <i class="fas fa-edit me-1"></i>Edit
                                     </button>
                                     <button class="btn btn-danger-custom btn-action delete-product"
@@ -431,6 +442,7 @@
     </div>
 </div>
 
+{{-- modal tambah --}}
 <div class="modal fade" id="addProductModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -454,6 +466,20 @@
                         <input type="number" class="form-control" id="add-price" name="price" min="0"
                             required>
                     </div>
+                    <div class="mb-3">
+                        <label for="add-unit" class="form-label">Satuan / Unit</label>
+                        <select class="form-select" id="add-unit" name="unit_id" required>
+                            <option value="">Pilih Unit</option>
+                            @foreach ($units as $unit)
+                                <option value="{{ $unit->id }}">{{ $unit->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="add-detail" class="form-label">Detail Produk</label>
+                        <textarea class="form-control" id="add-detail" name="detail" rows="3"
+                            placeholder="Masukkan deskripsi atau spesifikasi produk..."></textarea>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -466,6 +492,8 @@
     </div>
 </div>
 
+
+{{-- modal edit --}}
 <div class="modal fade" id="editProductModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -480,7 +508,6 @@
                         <label for="edit-name" class="form-label">Nama Produk</label>
                         <input type="text" class="form-control" id="edit-name" name="name" required>
                     </div>
-                    {{-- [FIX] Form input untuk stok --}}
                     <div class="mb-3">
                         <label for="edit-stock" class="form-label">Stok</label>
                         <input type="number" class="form-control" id="edit-stock" name="stock" min="0"
@@ -490,6 +517,19 @@
                         <label for="edit-price" class="form-label">Harga</label>
                         <input type="number" class="form-control" id="edit-price" name="price" min="0"
                             required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-unit" class="form-label">Satuan</label>
+                        <select class="form-select" id="edit-unit" name="unit_id" required>
+                            <option value="">-- Pilih Unit --</option>
+                            @foreach ($units as $unit)
+                                <option value="{{ $unit->id }}">{{ $unit->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-detail" class="form-label">Detail Produk</label>
+                        <textarea class="form-control" id="edit-detail" name="detail" rows="3"></textarea>
                     </div>
                 </form>
             </div>
@@ -703,19 +743,22 @@
         // Edit product
         if (e.target.closest('.edit-product')) {
             const button = e.target.closest('.edit-product');
-
+            console.log('ditekan')
             // [FIX] Mengambil data-stock dari tombol
             const id = button.dataset.id;
             const name = button.dataset.name;
             const stock = button.dataset.stock;
             const price = button.dataset.price;
+            const detail = button.dataset.detail || '';
+            const unitId = button.dataset.unit || '';
 
             // [FIX] Mengisi form edit dengan data yang benar
             document.getElementById('edit-id').value = id;
             document.getElementById('edit-name').value = name;
             document.getElementById('edit-stock').value = stock;
-
             document.getElementById('edit-price').value = price;
+            document.getElementById('edit-detail').value = detail;
+            document.getElementById('edit-unit').value = unitId;
 
             editProductModal.show();
         }

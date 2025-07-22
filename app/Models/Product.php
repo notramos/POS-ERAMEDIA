@@ -10,15 +10,18 @@ class Product extends Model
     'name',
     'price',
     'stock',
+    'unit_id',
+    'detail',
   ];
 
-  public function category()
-  {
-    return $this->belongsTo(Category::class);
-  }
 
   public function getFormattedPriceAttribute()
   {
     return 'Rp ' . number_format($this->price, 0, ',', '.');
+  }
+
+  public function unit()
+  {
+    return $this->belongsTo(Unit::class);
   }
 }

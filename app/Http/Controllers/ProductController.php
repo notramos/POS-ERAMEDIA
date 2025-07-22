@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Unit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -14,17 +15,17 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         // [PERBAIKAN 1] Menggunakan latest()->get() agar produk terbaru muncul di atas.
-        $products = Product::latest()->get(); 
-        
+        $products = Product::latest()->get();
+        $units = Unit::latest()->get();
         if ($request->ajax()) {
             // [PERBAIKAN 2] Mengirim JSON dengan kunci 'products' agar sesuai dengan JavaScript.
             return response()->json([
                 'products' => $products
             ]);
         }
-        
+
         // Kode ini sudah benar untuk memuat halaman pertama kali.
-        return view('product.index', compact('products'));
+        return view('product.index', compact('products', 'units'));
     }
 
     /**
@@ -44,6 +45,8 @@ class ProductController extends Controller
             'name' => 'required|string|max:255',
             'stock' => 'required|integer|min:0',
             'price' => 'required|numeric|min:0',
+            'unit_id' => 'required|exists:units,id',
+            'detail' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -80,6 +83,8 @@ class ProductController extends Controller
             'name' => 'required|string|max:255',
             'stock' => 'required|integer|min:0',
             'price' => 'required|numeric|min:0',
+            'unit_id' => 'required|exists:units,id',
+            'detail' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
