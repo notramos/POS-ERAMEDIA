@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -366,11 +367,11 @@
                 transform: translateX(-100%);
                 transition: transform 0.3s ease;
             }
-            
+
             .main-content {
                 margin-left: 0;
             }
-            
+
             .navbar-right .search-box {
                 display: none;
             }
@@ -382,6 +383,7 @@
                 opacity: 0;
                 transform: translateY(30px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -393,11 +395,20 @@
             animation: fadeInUp 0.6s ease forwards;
         }
 
-        .stat-card:nth-child(2) { animation-delay: 0.1s; }
-        .stat-card:nth-child(3) { animation-delay: 0.2s; }
-        .stat-card:nth-child(4) { animation-delay: 0.3s; }
+        .stat-card:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .stat-card:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        .stat-card:nth-child(4) {
+            animation-delay: 0.3s;
+        }
     </style>
 </head>
+
 <body>
     <!-- Navbar -->
     <nav class="navbar">
@@ -427,15 +438,9 @@
             <li><a href="/products"><i class="fas fa-box"></i> Produk</a></li>
             <li><a href="/customers"><i class="fas fa-users"></i> Pelanggan</a></li>
             <li><a href="/transactions"><i class="fas fa-receipt"></i> Transaksi</a></li>
-            <li><a href="/reports"><i class="fas fa-chart-bar"></i> Laporan</a></li>
+            <li><a href="/laporan"><i class="fas fa-chart-bar"></i> Laporan</a></li>
             <li><a href="/inventory"><i class="fas fa-warehouse"></i> Inventory</a></li>
-            <li><a href="/categories"><i class="fas fa-tags"></i> Kategori</a></li>
-            <li><a href="/discounts"><i class="fas fa-percentage"></i> Diskon</a></li>
-            <li><a href="/settings"><i class="fas fa-cog"></i> Pengaturan</a></li>
-            <li><a href="/dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
-            <li><a href="/products"><i class="fas fa-box"></i> Produk</a></li>
-            <li><a href="/transactions/create"><i class="fas fa-cash-register"></i> Transaksi</a></li>
-            <li><a href="/transactions/report"><i class="fas fa-file-alt"></i> Laporan</a></li>
+            <li><a href="/units"><i class="fas fa-tags"></i> Unit</a></li>
         </ul>
     </aside>
 
@@ -551,8 +556,8 @@
         <div class="footer-content">
             <div>© 2024 ERAMEDIA POS System. All rights reserved.</div>
             <div>
-                <span>Version 2.1.0</span> | 
-                <span>Online</span> | 
+                <span>Version 2.1.0</span> |
+                <span>Online</span> |
                 <span>Server: Jakarta</span>
             </div>
         </div>
@@ -567,7 +572,7 @@
                 item.addEventListener('click', function(e) {
                     // Remove preventDefault to allow navigation
                     // Add loading effect
-                    
+
                     // You can add additional logic here before navigation
                     // For example: save state, show loading, etc.
                 });
@@ -578,7 +583,7 @@
             searchInput.addEventListener('focus', function() {
                 this.placeholder = 'Ketik untuk mencari...';
             });
-            
+
             searchInput.addEventListener('blur', function() {
                 this.placeholder = 'Cari produk, transaksi...';
             });
@@ -608,14 +613,14 @@
                 const duration = 2000;
                 const increment = end / (duration / 16);
                 let current = start;
-                
+
                 const timer = setInterval(() => {
                     current += increment;
                     if (current >= end) {
                         current = end;
                         clearInterval(timer);
                     }
-                    
+
                     if (type === 'currency') {
                         element.textContent = 'Rp ' + Math.floor(current).toLocaleString('id-ID');
                     } else {
@@ -630,7 +635,7 @@
                 item.addEventListener('mouseenter', function() {
                     this.style.transform = 'translateX(5px)';
                 });
-                
+
                 item.addEventListener('mouseleave', function() {
                     this.style.transform = 'translateX(0)';
                 });
@@ -638,4 +643,5 @@
         });
     </script>
 </body>
+
 </html>

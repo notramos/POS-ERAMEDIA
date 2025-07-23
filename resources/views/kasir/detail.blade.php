@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <title>Detail Transaksi #{{ $transaction->id }}</title>
@@ -29,6 +30,7 @@
                 opacity: 0;
                 transform: translateY(30px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -226,113 +228,121 @@
                 margin: 1rem;
                 padding: 1.5rem;
             }
-            
+
             .page-title {
                 font-size: 2rem;
             }
-            
+
             .table-responsive {
                 font-size: 0.9rem;
             }
         }
     </style>
 </head>
+
 <body>
-<div class="main-container">
-    <!-- Alert untuk pesan sukses -->
-    @if (session('success'))
-        <div class="alert alert-success">
-            <i class="fas fa-check-circle"></i> {{ session('success') }}
-        </div>
-    @endif
+    <div class="main-container">
+        <!-- Alert untuk pesan sukses -->
+        @if (session('success'))
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> {{ session('success') }}
+            </div>
+        @endif
 
-    <h1 class="page-title">
-        <i class="fas fa-receipt"></i> Detail Transaksi
-    </h1>
+        <h1 class="page-title">
+            <i class="fas fa-receipt"></i> Detail Transaksi
+        </h1>
 
-    <!-- Informasi Transaksi -->
-    <div class="transaction-info">
-        <div class="info-item">
-            <span class="info-label">
-                <i class="fas fa-hashtag"></i> ID Transaksi
-            </span>
-            <span class="info-value">#{{ $transaction->id }}</span>
+        <!-- Informasi Transaksi -->
+        <div class="transaction-info">
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="fas fa-hashtag"></i> ID Transaksi
+                </span>
+                <span class="info-value">#{{ $transaction->id }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="fas fa-clock"></i> Tanggal
+                </span>
+                <span class="info-value">{{ optional($transaction->created_at)->format('d/m/Y H:i:s') }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="fas fa-shopping-cart"></i> Total Item
+                </span>
+                <span class="info-value">{{ $transaction->details->sum('quantity') }} item</span>
+            </div>
         </div>
-        <div class="info-item">
-            <span class="info-label">
-                <i class="fas fa-clock"></i> Tanggal
-            </span>
-            <span class="info-value">{{ optional($transaction->created_at)->format('d/m/Y H:i:s') }}</span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">
-                <i class="fas fa-shopping-cart"></i> Total Item
-            </span>
-            <span class="info-value">{{ $transaction->details->sum('quantity') }} item</span>
-        </div>
-    </div>
 
-    <!-- Tabel Detail Produk -->
-    <div class="items-table">
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th><i class="fas fa-hashtag"></i> No</th>
-                        <th><i class="fas fa-box"></i> Produk</th>
-                        <th><i class="fas fa-tag"></i> Harga Satuan</th>
-                        <th><i class="fas fa-sort-numeric-up"></i> Jumlah</th>
-                        <th><i class="fas fa-calculator"></i> Subtotal</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($transaction->details as $index => $detail)
+        <!-- Tabel Detail Produk -->
+        <div class="items-table">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
                         <tr>
-                            <td>{{ $index + 1 }}</td>
-                            <td class="product-name">{{ $detail->product->name }}</td>
-                            <td class="price-cell">Rp {{ number_format($detail->product->price, 0, ',', '.') }}</td>
-                            <td class="quantity-cell">{{ $detail->quantity }}</td>
-                            <td class="subtotal-cell">Rp {{ number_format($detail->subtotal, 0, ',', '.') }}</td>
+                            <th><i class="fas fa-hashtag"></i> No</th>
+                            <th><i class="fas fa-box"></i> Nama Produk</th>
+                            <th><i class="fas fa-ruler"></i> Unit</th>
+                            <th><i class="fas fa-tag"></i> Harga per Unit</th>
+                            <th><i class="fas fa-sort-numeric-up"></i> Jumlah</th>
+                            <th><i class="fas fa-calculator"></i> Subtotal</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach ($transaction->details as $index => $detail)
+                            <tr>
+                                <td>{{ $index + 1 }}</td>
+                                <td>{{ $detail->product->name }}</td>
+                                <td>{{ $detail->unit->name ?? '-' }}</td>
+                                <td>Rp
+                                    {{ number_format($detail->unit->price_per_unit ?? $detail->product->price, 0, ',', '.') }}
+                                </td>
+                                <td>{{ $detail->quantity }}</td>
+                                <td>Rp {{ number_format($detail->subtotal, 0, ',', '.') }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Total Transaksi -->
+        <div class="total-section">
+            <h4><i class="fas fa-calculator"></i> Total Transaksi</h4>
+            <div class="total-amount">Rp {{ number_format($transaction->total_price, 0, ',', '.') }}</div>
+            <small>{{ $transaction->details->count() }} produk, {{ $transaction->details->sum('quantity') }}
+                item</small>
+        </div>
+
+        <!-- Tombol Aksi -->
+        <div class="action-buttons">
+            <div class="d-flex gap-3 justify-content-center flex-wrap">
+                <a href="" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Kembali ke Daftar
+                </a>
+                <a href="{{ route('kasir.index') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Transaksi Baru
+                </a>
+                <a href="{{ route('transactions.receipt', $transaction->id) }}" class="btn btn-success"
+                    target="_blank">
+                    <i class="fas fa-print"></i> Cetak Struk
+                </a>
+            </div>
         </div>
     </div>
 
-    <!-- Total Transaksi -->
-    <div class="total-section">
-        <h4><i class="fas fa-calculator"></i> Total Transaksi</h4>
-        <div class="total-amount">Rp {{ number_format($transaction->total_price, 0, ',', '.') }}</div>
-        <small>{{ $transaction->details->count() }} produk, {{ $transaction->details->sum('quantity') }} item</small>
-    </div>
-
-    <!-- Tombol Aksi -->
-    <div class="action-buttons">
-        <div class="d-flex gap-3 justify-content-center flex-wrap">
-            <a href="" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Kembali ke Daftar
-            </a>
-            <a href="{{ route('kasir.index') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Transaksi Baru
-            </a>
-            <a href="{{ route('transactions.receipt', $transaction->id) }}" class="btn btn-success" target="_blank">
-                <i class="fas fa-print"></i> Cetak Struk
-            </a>
-        </div>
-    </div>
-</div>
-
-<script>
-    // Auto hide success alert after 5 seconds
-    setTimeout(function() {
-        const alert = document.querySelector('.alert-success');
-        if (alert) {
-            alert.style.transition = 'opacity 0.5s ease';
-            alert.style.opacity = '0';
-            setTimeout(() => alert.remove(), 500);
-        }
-    }, 5000);
-</script>
+    <script>
+        // Auto hide success alert after 5 seconds
+        setTimeout(function() {
+            const alert = document.querySelector('.alert-success');
+            if (alert) {
+                alert.style.transition = 'opacity 0.5s ease';
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            }
+        }, 5000);
+    </script>
 </body>
+
 </html>

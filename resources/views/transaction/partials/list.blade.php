@@ -16,10 +16,7 @@
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
               {{ $transaction->formatted_date }}
           </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-              <button class="text-primary hover:text-blue-600 mr-3 view-details" data-id="{{ $transaction->id }}">
-                  <i class="fas fa-eye"></i>
-              </button>
+          <td class="px-6 py-4 whitespace-nowrap  text-sm font-medium">
               <a href="{{ route('kasir.detail', $transaction) }}" class="text-green-600 hover:text-green-700 mr-3">
                   <i class="fas fa-receipt"></i>
               </a>

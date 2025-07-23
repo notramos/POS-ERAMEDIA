@@ -162,7 +162,6 @@
 
                 <form method="POST" action="" id="createTransactionForm">
                     @csrf
-
                     <!-- Products Section -->
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Products</label>
