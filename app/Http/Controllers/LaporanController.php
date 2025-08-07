@@ -11,26 +11,6 @@ class LaporanController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Transaction::with('details.product')
-            ->orderBy('created_at', 'desc');
-
-        // Search functionality
-        if ($request->has('search') && !empty($request->search)) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('id', 'like', "%{$search}%")
-                    ->orWhere('total_price', 'like', "%{$search}%")
-                    ->orWhere('paid_amount', 'like', "%{$search}%");
-            });
-        }
-
-        $transactions = $query->paginate(10);
-        // Kalau request via AJAX, return hanya bagian isi tabel
-        if ($request->ajax()) {
-            return view('transaction.partials.list', compact('transactions'))->render();
-        }
-
-        // Jika request AJAX untuk mendapatkan detail transaksi
         if ($request->ajax() && $request->has('transaction_id')) {
             $transaction = Transaction::with('transactionDetails.product')
                 ->findOrFail($request->transaction_id);
@@ -50,6 +30,33 @@ class LaporanController extends Controller
             ]);
         }
 
+        // Query dasar
+        $query = Transaction::with('details.product')->orderBy('created_at', 'desc');
+
+        // Filter pencarian (search)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('id', 'like', "%{$search}%")
+                    ->orWhere('total_price', 'like', "%{$search}%")
+                    ->orWhere('paid_amount', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter tanggal
+        if ($request->filled('date')) {
+            $query->whereDate('created_at', $request->date);
+        }
+
+        // Ambil data
+        $transactions = $query->paginate(10);
+
+        // Jika request AJAX biasa, hanya render bagian tabel
+        if ($request->ajax()) {
+            return view('transaction.partials.list', compact('transactions'))->render();
+        }
+
+        // Jika bukan AJAX, tampilkan halaman utama
         return view('transaction.transactionindex', compact('transactions'));
     }
 

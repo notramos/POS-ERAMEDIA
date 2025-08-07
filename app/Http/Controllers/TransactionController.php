@@ -110,6 +110,7 @@ class TransactionController extends Controller
             Log::info('Transaksi berhasil dibuat:', ['id' => $transaction->id]);
 
             // Buat detail transaksi
+            // Buat detail transaksi
             foreach ($transactionItems as $item) {
                 $detailData = [
                     'transaction_id' => $transaction->id,
@@ -122,6 +123,20 @@ class TransactionController extends Controller
                 Log::info('Membuat detail transaksi:', $detailData);
 
                 TransactionDetail::create($detailData);
+
+                // Kurangi stok produk
+                $product = Product::find($item['product_id']);
+
+                if ($product->stock < $item['quantity']) {
+                    throw new \Exception("Stok tidak mencukupi untuk produk: {$product->name}");
+                }
+
+                $product->stock -= $item['quantity'];
+                $product->save();
+
+                Log::info("Stok dikurangi untuk produk {$product->name}", [
+                    'stok_tersisa' => $product->stock,
+                ]);
             }
 
             DB::commit();

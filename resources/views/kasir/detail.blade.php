@@ -318,7 +318,7 @@
         <!-- Tombol Aksi -->
         <div class="action-buttons">
             <div class="d-flex gap-3 justify-content-center flex-wrap">
-                <a href="" class="btn btn-secondary">
+                <a href="{{ route('laporan.index') }}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Kembali ke Daftar
                 </a>
                 <a href="{{ route('kasir.index') }}" class="btn btn-primary">

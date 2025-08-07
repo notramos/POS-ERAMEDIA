@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Eramedia</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <style>
         * {
             margin: 0;
@@ -292,49 +293,67 @@
             </div>
 
             <div class="forgot-password">
-                <a href="#" onclick="showForgotPassword()">Lupa Password?</a>
+                <a href="javascript:void(0)" onclick="showForgotPassword()">Lupa Password?</a>
             </div>
 
             <button type="submit" class="login-btn">Masuk</button>
         </form>
+
+        <div id="loginError" style="color:red;"></div>
 
         <div class="divider">
             <span>atau</span>
         </div>
 
         <div class="register-link">
-            Belum punya akun? <a href="#" onclick="showRegister()">Daftar sekarang</a>
+            Belum punya akun? <button onclick="showRegister()"
+                style="background:none;border:none;color:blue;text-decoration:underline;cursor:pointer;">
+                Daftar sekarang
+            </button>
         </div>
     </div>
 
     <script>
         // Form submission handler
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-            // Basic validation
-            if (!email || !password) {
-                alert('Mohon isi semua field yang diperlukan');
-                return;
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': token
+                    },
+                    body: JSON.stringify({
+                        email,
+                        password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Redirect sesuai role
+                    if (data.role === 'owner') {
+                        window.location.href = '/dashboard';
+                    } else {
+                        window.location.href = '/kasir';
+                    }
+                } else {
+                    // Response error dari server (HTTP 401, 422, dst)
+                    document.getElementById('loginError').innerText = data.message || 'Login gagal.';
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('loginError').innerText = 'Terjadi kesalahan saat login.';
             }
-
-            // Simulate login process
-            const loginBtn = document.querySelector('.login-btn');
-            loginBtn.textContent = 'Memproses...';
-            loginBtn.disabled = true;
-
-            // Simulate API call
-            setTimeout(() => {
-                alert('Login berhasil! Selamat datang di Eramedia');
-                loginBtn.textContent = 'Masuk';
-                loginBtn.disabled = false;
-
-                // Reset form
-                document.getElementById('loginForm').reset();
-            }, 1500);
         });
 
         // Input animation effects
@@ -356,7 +375,7 @@
 
         // Register handler
         function showRegister() {
-            alert('Halaman registrasi akan segera tersedia. Hubungi admin untuk membuat akun baru.');
+            window.location.href = "/register";
         }
 
         // Add subtle parallax effect to floating shapes

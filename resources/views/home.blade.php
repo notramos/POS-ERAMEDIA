@@ -53,30 +53,7 @@
             display: flex;
             align-items: center;
             gap: 1.5rem;
-        }
-
-        .search-box {
-            display: flex;
-            align-items: center;
-            background: rgba(102, 126, 234, 0.1);
-            padding: 0.5rem 1rem;
-            border-radius: 25px;
-            border: 1px solid rgba(102, 126, 234, 0.2);
-            transition: all 0.3s ease;
-        }
-
-        .search-box:focus-within {
-            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
-            transform: translateY(-2px);
-        }
-
-        .search-box input {
-            border: none;
-            outline: none;
-            background: transparent;
-            padding: 0.3rem;
-            width: 200px;
-            color: #333;
+            position: relative;
         }
 
         .user-profile {
@@ -105,6 +82,69 @@
             justify-content: center;
             color: white;
             font-weight: bold;
+        }
+
+        /* Dropdown Menu */
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            min-width: 200px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1001;
+            margin-top: 0.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .dropdown-menu.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            color: #333;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            gap: 12px;
+            border-radius: 8px;
+            margin: 4px;
+        }
+
+        .dropdown-item:hover {
+            background: linear-gradient(90deg, rgba(102, 126, 234, 0.1), transparent);
+            color: #667eea;
+            transform: translateX(5px);
+        }
+
+        .dropdown-item i {
+            width: 16px;
+            color: #667eea;
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background-color: #e9ecef;
+            margin: 8px 12px;
+        }
+
+        .chevron {
+            transition: transform 0.3s ease;
+            margin-left: 0.5rem;
+            color: #667eea;
+        }
+
+        .chevron.rotate {
+            transform: rotate(180deg);
         }
 
         /* Sidebar */
@@ -276,69 +316,6 @@
             color: #28a745;
         }
 
-        /* Recent Activity */
-        .activity-section {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 1.5rem;
-            border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .section-title {
-            font-size: 1.3rem;
-            margin-bottom: 1rem;
-            color: #333;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .activity-list {
-            list-style: none;
-        }
-
-        .activity-item {
-            display: flex;
-            align-items: center;
-            padding: 1rem 0;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-        }
-
-        .activity-item:hover {
-            background: rgba(102, 126, 234, 0.05);
-            padding-left: 1rem;
-            border-radius: 8px;
-        }
-
-        .activity-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 1rem;
-            color: white;
-        }
-
-        .activity-content {
-            flex: 1;
-        }
-
-        .activity-title {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 0.2rem;
-        }
-
-        .activity-time {
-            font-size: 0.8rem;
-            color: #666;
-        }
-
         /* Footer */
         .footer {
             position: fixed;
@@ -371,40 +348,6 @@
             .main-content {
                 margin-left: 0;
             }
-
-            .navbar-right .search-box {
-                display: none;
-            }
-        }
-
-        /* Animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .stat-card,
-        .activity-section {
-            animation: fadeInUp 0.6s ease forwards;
-        }
-
-        .stat-card:nth-child(2) {
-            animation-delay: 0.1s;
-        }
-
-        .stat-card:nth-child(3) {
-            animation-delay: 0.2s;
-        }
-
-        .stat-card:nth-child(4) {
-            animation-delay: 0.3s;
         }
     </style>
 </head>
@@ -417,14 +360,30 @@
                 <i class="fas fa-store"></i> ERAMEDIA
             </div>
             <div class="navbar-right">
-                <div class="search-box">
-                    <i class="fas fa-search" style="color: #667eea; margin-right: 0.5rem;"></i>
-                    <input type="text" placeholder="Cari produk, transaksi...">
-                </div>
-                <div class="user-profile">
+                <div class="user-profile" id="userProfile">
                     <div class="user-avatar">A</div>
-                    <span>Admin</span>
-                    <i class="fas fa-chevron-down" style="margin-left: 0.5rem; color: #667eea;"></i>
+                    <span>{{ Auth::user()->role->name }}</span>
+                    <i class="fas fa-chevron-down chevron" id="chevronIcon"></i>
+                </div>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <a href="#" class="dropdown-item">
+                        <i class="fas fa-user"></i>
+                        Profile
+                    </a>
+                    <a href="#" class="dropdown-item">
+                        <i class="fas fa-cog"></i>
+                        Settings
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="dropdown-item"
+                        onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </a>
+
+                    <form id="logout-form" action="{{ route('auth.logout') }}" method="POST" style="display: none;">
+                        @csrf
+                    </form>
                 </div>
             </div>
         </div>
@@ -436,11 +395,9 @@
             <li><a href="/dashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
             <li><a href="/kasir"><i class="fas fa-cash-register"></i> Kasir</a></li>
             <li><a href="/products"><i class="fas fa-box"></i> Produk</a></li>
-            <li><a href="/customers"><i class="fas fa-users"></i> Pelanggan</a></li>
-            <li><a href="/transactions"><i class="fas fa-receipt"></i> Transaksi</a></li>
-            <li><a href="/laporan"><i class="fas fa-chart-bar"></i> Laporan</a></li>
-            <li><a href="/inventory"><i class="fas fa-warehouse"></i> Inventory</a></li>
-            <li><a href="/units"><i class="fas fa-tags"></i> Unit</a></li>
+            <li><a href="/users"><i class="fas fa-users"></i> Pengguna</a></li>
+            <li><a href="/units"><i class="fas fa-receipt"></i> Unit</a></li>
+            <li><a href="/laporan"><i class="fas fa-chart-bar"></i> Laporan Transaksi</a></li>
         </ul>
     </aside>
 
@@ -493,61 +450,16 @@
 
             <div class="stat-card">
                 <div class="stat-header">
-                    <span class="stat-title">Stok Menipis</span>
-                    <div class="stat-icon" style="background: linear-gradient(45deg, #dc3545, #fd7e14);">
-                        <i class="fas fa-exclamation-triangle"></i>
+                    <span class="stat-title">Total Pelanggan</span>
+                    <div class="stat-icon" style="background: linear-gradient(45deg, #6f42c1, #e83e8c);">
+                        <i class="fas fa-users"></i>
                     </div>
                 </div>
-                <div class="stat-value">23</div>
-                <div class="stat-change" style="color: #dc3545;">
-                    <i class="fas fa-arrow-down"></i> Perlu restok
+                <div class="stat-value">1,234</div>
+                <div class="stat-change">
+                    <i class="fas fa-arrow-up"></i> +5.2% dari bulan lalu
                 </div>
             </div>
-        </div>
-
-        <div class="activity-section">
-            <h2 class="section-title">
-                <i class="fas fa-clock"></i>
-                Aktivitas Terbaru
-            </h2>
-            <ul class="activity-list">
-                <li class="activity-item">
-                    <div class="activity-icon" style="background: linear-gradient(45deg, #28a745, #20c997);">
-                        <i class="fas fa-plus"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">Produk baru ditambahkan: Laptop ASUS ROG</div>
-                        <div class="activity-time">2 menit yang lalu</div>
-                    </div>
-                </li>
-                <li class="activity-item">
-                    <div class="activity-icon" style="background: linear-gradient(45deg, #007bff, #6610f2);">
-                        <i class="fas fa-shopping-bag"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">Transaksi #INV-2024-001 berhasil - Rp 350,000</div>
-                        <div class="activity-time">5 menit yang lalu</div>
-                    </div>
-                </li>
-                <li class="activity-item">
-                    <div class="activity-icon" style="background: linear-gradient(45deg, #fd7e14, #e83e8c);">
-                        <i class="fas fa-user-plus"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">Pelanggan baru terdaftar: Ahmad Wijaya</div>
-                        <div class="activity-time">15 menit yang lalu</div>
-                    </div>
-                </li>
-                <li class="activity-item">
-                    <div class="activity-icon" style="background: linear-gradient(45deg, #dc3545, #fd7e14);">
-                        <i class="fas fa-exclamation"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">Stok Mouse Wireless hampir habis (5 tersisa)</div>
-                        <div class="activity-time">30 menit yang lalu</div>
-                    </div>
-                </li>
-            </ul>
         </div>
     </main>
 
@@ -557,88 +469,35 @@
             <div>© 2024 ERAMEDIA POS System. All rights reserved.</div>
             <div>
                 <span>Version 2.1.0</span> |
-                <span>Online</span> |
-                <span>Server: Jakarta</span>
+                <span>Online</span>
             </div>
         </div>
     </footer>
 
     <script>
-        // Add some interactive functionality
         document.addEventListener('DOMContentLoaded', function() {
-            // Sidebar menu interaction - only for visual feedback, allow navigation
-            const menuItems = document.querySelectorAll('.sidebar-menu a');
-            menuItems.forEach(item => {
-                item.addEventListener('click', function(e) {
-                    // Remove preventDefault to allow navigation
-                    // Add loading effect
+            const userProfile = document.getElementById('userProfile');
+            const dropdownMenu = document.getElementById('dropdownMenu');
+            const chevronIcon = document.getElementById('chevronIcon');
 
-                    // You can add additional logic here before navigation
-                    // For example: save state, show loading, etc.
-                });
+            // Toggle dropdown saat diklik
+            userProfile.addEventListener('click', function(e) {
+                e.stopPropagation();
+                dropdownMenu.classList.toggle('show');
+                chevronIcon.classList.toggle('rotate');
             });
 
-            // Search functionality
-            const searchInput = document.querySelector('.search-box input');
-            searchInput.addEventListener('focus', function() {
-                this.placeholder = 'Ketik untuk mencari...';
-            });
-
-            searchInput.addEventListener('blur', function() {
-                this.placeholder = 'Cari produk, transaksi...';
-            });
-
-            // User profile dropdown simulation
-            const userProfile = document.querySelector('.user-profile');
-            userProfile.addEventListener('click', function() {
-                this.style.transform = 'translateY(-2px) scale(0.95)';
-                setTimeout(() => {
-                    this.style.transform = 'translateY(-2px)';
-                }, 150);
-            });
-
-            // Animate numbers on load
-            const statValues = document.querySelectorAll('.stat-value');
-            statValues.forEach(stat => {
-                const finalValue = stat.textContent;
-                if (finalValue.includes('Rp')) {
-                    animateNumber(stat, 0, 2450000, 'currency');
-                } else {
-                    const numValue = parseInt(finalValue.replace(/[^0-9]/g, ''));
-                    animateNumber(stat, 0, numValue, 'number');
+            // Tutup dropdown saat klik di luar
+            document.addEventListener('click', function(e) {
+                if (!userProfile.contains(e.target)) {
+                    dropdownMenu.classList.remove('show');
+                    chevronIcon.classList.remove('rotate');
                 }
             });
 
-            function animateNumber(element, start, end, type) {
-                const duration = 2000;
-                const increment = end / (duration / 16);
-                let current = start;
-
-                const timer = setInterval(() => {
-                    current += increment;
-                    if (current >= end) {
-                        current = end;
-                        clearInterval(timer);
-                    }
-
-                    if (type === 'currency') {
-                        element.textContent = 'Rp ' + Math.floor(current).toLocaleString('id-ID');
-                    } else {
-                        element.textContent = Math.floor(current).toString();
-                    }
-                }, 16);
-            }
-
-            // Add hover effects to activity items
-            const activityItems = document.querySelectorAll('.activity-item');
-            activityItems.forEach(item => {
-                item.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateX(5px)';
-                });
-
-                item.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateX(0)';
-                });
+            // Prevent dropdown dari menutup saat diklik item dropdown
+            dropdownMenu.addEventListener('click', function(e) {
+                e.stopPropagation();
             });
         });
     </script>

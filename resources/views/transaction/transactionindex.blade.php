@@ -4,10 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Transaction Management - Laravel 11</title>
+    <title>Daftar Transaksi - ERAMEDIA POS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+    </style>
     <script>
         tailwind.config = {
             theme: {
@@ -28,12 +35,12 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <h1 class="text-xl font-semibold text-gray-900">Transaction Management</h1>
+                    <h1 class="text-xl font-semibold text-gray-900">Daftar Transaksi</h1>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <button class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-                        onclick="openCreateModal()">
-                        <i class="fas fa-plus mr-2"></i>New Transaction
+                    <button onclick="window.location.href='{{ route('kasir.index') }}'"
+                        class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Tambah Transaksi
                     </button>
                 </div>
             </div>
@@ -56,27 +63,28 @@
 
         <!-- Search & Filter Section -->
         <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <form method="GET" id="search-form"action="{{ route('laporan.index') }}"
-                class="flex flex-col md:flex-row gap-4">
+            <div class="flex flex-col md:flex-row gap-4 items-end">
                 <div class="flex-1">
                     <div class="relative">
                         <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                        <input type="text" name="search" value="{{ request('search') }}"id="search-input"
-                            placeholder="Search by ID or amount..."
+                        <input type="text" id="search-input" placeholder="Search by ID or amount..."
                             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
                     </div>
                 </div>
+
+                <div>
+                    <label for="filter-date" class="text-sm text-gray-700">Filter by Date:</label>
+                    <input type="date" id="filter-date"
+                        class="w-full py-2 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+
                 <div class="flex gap-2">
-                    <button type="submit"
-                        class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-600 transition-colors">
-                        <i class="fas fa-search mr-2"></i>Search
-                    </button>
-                    <a href="{{ route('laporan.index') }}"
+                    <button id="search-reset"
                         class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                         <i class="fas fa-refresh mr-2"></i>Reset
-                    </a>
+                    </button>
                 </div>
-            </form>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -234,31 +242,47 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const searchInput = document.getElementById('search-input');
+        const dateInput = document.getElementById('filter-date');
+        const resetButton = document.getElementById('search-reset');
         const resultsContainer = document.getElementById('transaction-results');
 
         let debounceTimeout;
 
+        function performSearch() {
+            const search = searchInput.value.trim();
+            const date = dateInput.value;
+
+            const params = new URLSearchParams();
+            if (search) params.append('search', search);
+            if (date) params.append('date', date);
+
+            fetch(`{{ route('laporan.index') }}?${params.toString()}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(res => res.text())
+                .then(html => {
+                    resultsContainer.innerHTML = html;
+                })
+                .catch(err => {
+                    console.error('AJAX search error:', err);
+                });
+        }
+
         searchInput.addEventListener('input', function() {
             clearTimeout(debounceTimeout);
-
-            debounceTimeout = setTimeout(() => {
-                const query = searchInput.value;
-
-                fetch(`{{ route('laporan.index') }}?search=${encodeURIComponent(query)}`, {
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    })
-                    .then(res => res.text())
-                    .then(html => {
-                        resultsContainer.innerHTML = html;
-                    })
-                    .catch(err => {
-                        console.error('AJAX search error:', err);
-                    });
-            }, 300); // debounce 300ms
+            debounceTimeout = setTimeout(performSearch, 300);
         });
 
+        dateInput.addEventListener('change', performSearch);
+
+        resetButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            searchInput.value = '';
+            dateInput.value = '';
+            performSearch();
+        });
         // tampil detail transaksi
         const rows = document.querySelectorAll('.transaction-row');
         const info = document.getElementById('selectedTransactionInfo');

@@ -7,6 +7,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -250,6 +252,7 @@
 </head>
 
 <body>
+    @include('partials.navbar')
     <div class="main-container">
         <h1 class="page-title">
             <i class="fas fa-cash-register"></i> Transaksi Baru
@@ -342,7 +345,6 @@
 
             <!-- Payment Section -->
             <div class="payment-section mt-4">
-                <h4><i class="fas fa-money-bill-wave"></i> Pembayaran</h4>
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label">

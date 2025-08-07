@@ -19,7 +19,22 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
+
+            // Cek apakah request dari JavaScript (AJAX)
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Login berhasil',
+                    'role' => Auth::user()->role->name,
+                ]);
+            }
+
             return redirect()->route('dashboard');
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Email atau password salah'
+            ], 401);
         }
 
         return back()->withErrors(['email' => 'Email atau password salah']);
