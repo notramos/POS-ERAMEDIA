@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\TransactionDetail;
 use Illuminate\Support\Facades\Log;
 use App\Models\Unit;
+use Illuminate\Support\Facades\Redirect;
 
 
 
@@ -195,12 +196,14 @@ class TransactionController extends Controller
      */
     public function destroy(Transaction $transaction)
     {
-        //
+        $transaction->delete();
+
+        return Redirect::back()->with('success', 'Transaction deleted successfully.');
     }
 
     public function receipt(Transaction $transaction)
     {
         $transaction->load('details.product');
-        return view('transactions.receipt', compact('transaction'));
+        return view('transaction.receipt', compact('transaction'));
     }
 }

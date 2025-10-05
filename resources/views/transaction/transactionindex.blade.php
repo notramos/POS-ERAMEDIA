@@ -33,10 +33,17 @@
     <!-- Navigation -->
     <nav class="bg-white shadow-sm border-b">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <h1 class="text-xl font-semibold text-gray-900">Daftar Transaksi</h1>
+            <div class="flex justify-between h-16 items-center">
+                <!-- Tombol Kembali ke Dashboard -->
+                <div class="flex items-center space-x-4">
+                    <a href="{{ route('dashboard') }}"
+                        class="inline-flex items-center text-gray-700 hover:text-gray-900 transition-colors duration-200">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        <span class="font-medium">Kembali ke Dashboard</span>
+                    </a>
                 </div>
+
+                <!-- Tombol Tambah Transaksi -->
                 <div class="flex items-center space-x-4">
                     <button onclick="window.location.href='{{ route('kasir.index') }}'"
                         class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
@@ -187,10 +194,6 @@
                                 <input type="number" name="items[0][quantity]" placeholder="Qty" min="1"
                                     class="w-20 border border-gray-300 rounded-lg px-3 py-2 quantity-input" required>
                                 <span class="w-32 text-sm text-gray-600 subtotal-display">Rp 0</span>
-                                <button type="button" onclick="removeProductItem(this)"
-                                    class="text-red-600 hover:text-red-700 px-2">
-                                    <i class="fas fa-trash"></i>
-                                </button>
                             </div>
                         </div>
                         <button type="button" onclick="addProductItem()"
@@ -238,8 +241,58 @@
             </div>
         </div>
     </div>
+    <div id="deleteModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black bg-opacity-50">
+        <div class="bg-white rounded-lg shadow-lg max-w-sm w-full p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Konfirmasi Hapus</h3>
+            <p class="text-gray-600 mb-6">Apakah Anda yakin ingin menghapus transaksi ini? Tindakan ini tidak bisa
+                dibatalkan.</p>
+            <div class="flex justify-end space-x-3">
+                <button type="button" id="cancelDelete"
+                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded hover:bg-gray-300">
+                    Batal
+                </button>
+                <button type="button" id="confirmDelete"
+                    class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700">
+                    Hapus
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 <script>
+    // Variabel untuk menyimpan form yang akan dihapus
+    let deleteForm = null;
+
+    // Buka modal konfirmasi
+    document.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            deleteForm = this.closest('form'); // Simpan form yang akan dihapus
+            document.getElementById('deleteModal').classList.remove('hidden');
+        });
+    });
+
+    // Tutup modal
+    document.getElementById('cancelDelete').addEventListener('click', function() {
+        document.getElementById('deleteModal').classList.add('hidden');
+        deleteForm = null;
+    });
+
+    // Tutup modal jika klik di luar
+    document.getElementById('deleteModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.add('hidden');
+            deleteForm = null;
+        }
+    });
+
+    // Jalankan penghapusan
+    document.getElementById('confirmDelete').addEventListener('click', function() {
+        if (deleteForm) {
+            deleteForm.submit(); // Submit form asli
+        }
+    });
+
+
     document.addEventListener('DOMContentLoaded', function() {
         const searchInput = document.getElementById('search-input');
         const dateInput = document.getElementById('filter-date');

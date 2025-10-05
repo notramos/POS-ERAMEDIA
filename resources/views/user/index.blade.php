@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ERAMEDIA - Kelola User Karyawan</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         * {
@@ -318,20 +319,9 @@
         <!-- Filter & Actions -->
         <div class="card">
             <div class="card-body">
-                <div class="filter-section">
-                    <input type="text" id="searchInput" class="form-control" placeholder="Cari nama atau email...">
-                    <select id="departmentFilter" class="form-control">
-                        <option value="">Semua Departemen</option>
-                        <option value="IT">IT</option>
-                        <option value="HR">HR</option>
-                        <option value="Finance">Finance</option>
-                        <option value="Marketing">Marketing</option>
-                    </select>
-                    <select id="statusFilter" class="form-control">
-                        <option value="">Semua Status</option>
-                        <option value="Aktif">Aktif</option>
-                        <option value="Nonaktif">Nonaktif</option>
-                    </select>
+                <div class="filter-section d-flex gap-3 flex-wrap mb-4">
+                    <input type="text" id="searchInput" class="form-control" style="max-width: 300px;"
+                        placeholder="Cari nama atau email...">
                     <button class="btn btn-primary" onclick="openModal('add')">
                         <i class="fas fa-plus"></i> Tambah Karyawan
                     </button>
@@ -349,293 +339,264 @@
                                 <th>No</th>
                                 <th>Nama</th>
                                 <th>Email</th>
-                                <th>Telepon</th>
-                                <th>Departemen</th>
-                                <th>Status</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="employeeTable">
-                            <!-- Data akan diisi oleh JavaScript -->
+                            <tr>
+                                <td colspan="5" class="text-center">Memuat data...</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Modal Tambah/Edit -->
-    <div class="modal-overlay" id="employeeModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title" id="modalTitle">Tambah Karyawan</h3>
-                <button class="close-btn" onclick="closeModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="employeeForm">
-                    <input type="hidden" id="employeeId">
-                    <div class="form-group">
-                        <label class="form-label">Nama Lengkap</label>
-                        <input type="text" id="name" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Email</label>
-                        <input type="email" id="email" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Telepon</label>
-                        <input type="text" id="phone" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Departemen</label>
-                        <select id="department" class="form-control" required>
-                            <option value="">Pilih Departemen</option>
-                            <option value="IT">IT</option>
-                            <option value="HR">HR</option>
-                            <option value="Finance">Finance</option>
-                            <option value="Marketing">Marketing</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Status</label>
-                        <select id="status" class="form-control" required>
-                            <option value="Aktif">Aktif</option>
-                            <option value="Nonaktif">Nonaktif</option>
-                        </select>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn" onclick="closeModal()"
-                    style="background: #6c757d; color: white;">Batal</button>
-                <button type="button" class="btn btn-primary" onclick="saveEmployee()">Simpan</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Konfirmasi Hapus -->
-    <div class="modal-overlay" id="deleteModal">
-        <div class="modal" style="max-width: 400px;">
-            <div class="modal-header">
-                <h3 class="modal-title">Konfirmasi Hapus</h3>
-                <button class="close-btn" onclick="closeDeleteModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div style="text-align: center;">
-                    <i class="fas fa-exclamation-triangle"
-                        style="font-size: 3rem; color: #dc3545; margin-bottom: 1rem;"></i>
-                    <p>Yakin ingin menghapus karyawan ini?</p>
+        <!-- Modal Tambah/Edit -->
+        <div class="modal-overlay" id="employeeModal" style="display: none;">
+            <div class="modal" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3 class="modal-title" id="modalTitle">Tambah Karyawan</h3>
+                    <button class="close-btn" onclick="closeModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="employeeForm">
+                        @csrf
+                        <input type="hidden" id="employeeId">
+                        <div class="form-group mb-3">
+                            <label class="form-label">Nama Lengkap</label>
+                            <input type="text" id="name" class="form-control" required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" id="email" class="form-control" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" onclick="closeModal()"
+                        style="background: #6c757d; color: white;">Batal</button>
+                    <button type="button" class="btn btn-primary" onclick="saveEmployee()">Simpan</button>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn" onclick="closeDeleteModal()"
-                    style="background: #6c757d; color: white;">Batal</button>
-                <button type="button" class="btn btn-danger" onclick="confirmDelete()">Hapus</button>
+        </div>
+
+        <!-- Modal Konfirmasi Hapus -->
+        <div class="modal-overlay" id="deleteModal" style="display: none;">
+            <div class="modal" style="max-width: 400px;">
+                <div class="modal-header">
+                    <h3 class="modal-title">Konfirmasi Hapus</h3>
+                    <button class="close-btn" onclick="closeDeleteModal()">&times;</button>
+                </div>
+                <div class="modal-body text-center">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #dc3545;"></i>
+                    <p class="mt-3">Yakin ingin menghapus karyawan ini?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" onclick="closeDeleteModal()"
+                        style="background: #6c757d; color: white;">Batal</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmDelete()">Hapus</button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <script>
-        // Data karyawan
-        let employees = [{
-                id: 1,
-                name: 'Ahmad Wijaya',
-                email: 'ahmad@eramedia.com',
-                phone: '081234567890',
-                department: 'IT',
-                status: 'Aktif'
-            },
-            {
-                id: 2,
-                name: 'Siti Nurhaliza',
-                email: 'siti@eramedia.com',
-                phone: '081234567891',
-                department: 'HR',
-                status: 'Aktif'
-            },
-            {
-                id: 3,
-                name: 'Budi Santoso',
-                email: 'budi@eramedia.com',
-                phone: '081234567892',
-                department: 'Finance',
-                status: 'Aktif'
-            },
-            {
-                id: 4,
-                name: 'Maya Indira',
-                email: 'maya@eramedia.com',
-                phone: '081234567893',
-                department: 'Marketing',
-                status: 'Nonaktif'
-            }
-        ];
+        <script>
+            let employees = [];
+            let editingId = null;
+            let deleteId = null;
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-        let editingId = null;
-        let deleteId = null;
-
-        // Render tabel
-        function renderTable() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const departmentFilter = document.getElementById('departmentFilter').value;
-            const statusFilter = document.getElementById('statusFilter').value;
-
-            const filtered = employees.filter(emp => {
-                const matchSearch = emp.name.toLowerCase().includes(searchTerm) ||
-                    emp.email.toLowerCase().includes(searchTerm);
-                const matchDept = !departmentFilter || emp.department === departmentFilter;
-                const matchStatus = !statusFilter || emp.status === statusFilter;
-                return matchSearch && matchDept && matchStatus;
-            });
-
-            const tbody = document.getElementById('employeeTable');
-            tbody.innerHTML = '';
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="7" style="text-align: center; padding: 2rem; color: #666;">
-                            <i class="fas fa-users" style="font-size: 3rem; opacity: 0.3; margin-bottom: 1rem; display: block;"></i>
-                            Tidak ada data karyawan yang ditemukan
-                        </td>
-                    </tr>
-                `;
-                return;
+            // Ambil data dari server
+            async function fetchEmployees() {
+                try {
+                    const response = await fetch("{{ route('karyawan.data') }}");
+                    employees = await response.json();
+                    renderTable();
+                } catch (error) {
+                    console.error("Gagal memuat data karyawan", error);
+                }
             }
 
-            filtered.forEach((emp, index) => {
-                const statusBadge = emp.status === 'Aktif' ?
-                    '<span class="badge badge-success">Aktif</span>' :
-                    '<span class="badge badge-danger">Nonaktif</span>';
 
-                const row = `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td><strong>${emp.name}</strong></td>
-                        <td>${emp.email}</td>
-                        <td>${emp.phone}</td>
-                        <td>${emp.department}</td>
-                        <td>${statusBadge}</td>
-                        <td>
-                            <div class="action-buttons">
-                                <button class="btn btn-warning btn-sm" onclick="editEmployee(${emp.id})" title="Edit">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-danger btn-sm" onclick="deleteEmployee(${emp.id})" title="Hapus">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-                tbody.innerHTML += row;
-            });
-        }
+            // Render tabel
+            function renderTable() {
+                const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+                const filtered = employees.filter(emp =>
+                    emp.name.toLowerCase().includes(searchTerm) ||
+                    emp.email.toLowerCase().includes(searchTerm)
+                );
 
-        // Modal functions
-        function openModal(mode, id = null) {
-            const modal = document.getElementById('employeeModal');
-            const modalTitle = document.getElementById('modalTitle');
-            const form = document.getElementById('employeeForm');
+                const tbody = document.getElementById('employeeTable');
+                tbody.innerHTML = '';
 
-            if (mode === 'add') {
-                modalTitle.textContent = 'Tambah Karyawan';
-                form.reset();
-                document.getElementById('employeeId').value = '';
-                editingId = null;
-            }
+                if (filtered.length === 0) {
+                    tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center py-4 text-muted">
+                        <i class="fas fa-users" style="font-size: 2rem; opacity: 0.3;"></i><br>
+                        Tidak ada karyawan ditemukan
+                    </td>
+                </tr>
+            `;
+                    return;
+                }
 
-            modal.classList.add('show');
-        }
-
-        function closeModal() {
-            document.getElementById('employeeModal').classList.remove('show');
-        }
-
-        function editEmployee(id) {
-            const emp = employees.find(e => e.id === id);
-            if (emp) {
-                document.getElementById('employeeId').value = emp.id;
-                document.getElementById('name').value = emp.name;
-                document.getElementById('email').value = emp.email;
-                document.getElementById('phone').value = emp.phone;
-                document.getElementById('department').value = emp.department;
-                document.getElementById('status').value = emp.status;
-                document.getElementById('modalTitle').textContent = 'Edit Karyawan';
-                editingId = id;
-
-                document.getElementById('employeeModal').classList.add('show');
-            }
-        }
-
-        function saveEmployee() {
-            const form = document.getElementById('employeeForm');
-            if (!form.checkValidity()) {
-                form.reportValidity();
-                return;
-            }
-
-            const data = {
-                name: document.getElementById('name').value,
-                email: document.getElementById('email').value,
-                phone: document.getElementById('phone').value,
-                department: document.getElementById('department').value,
-                status: document.getElementById('status').value
-            };
-
-            if (editingId) {
-                const index = employees.findIndex(e => e.id === editingId);
-                employees[index] = {
-                    ...employees[index],
-                    ...data
-                };
-            } else {
-                const newId = Math.max(...employees.map(e => e.id)) + 1;
-                employees.push({
-                    id: newId,
-                    ...data
+                filtered.forEach((emp, index) => {
+                    const row = `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td><strong>${emp.name}</strong></td>
+                    <td>${emp.email}</td>
+                    <td>
+                        <div class="action-buttons d-flex gap-2">
+                            <button class="btn btn-warning btn-sm" onclick="editEmployee(${emp.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteEmployee(${emp.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+                    tbody.innerHTML += row;
                 });
             }
 
-            closeModal();
-            renderTable();
-        }
+            // Buka modal
+            function openModal(mode) {
+                const modal = document.getElementById('employeeModal');
+                const form = document.getElementById('employeeForm');
+                if (mode === 'add') {
+                    document.getElementById('modalTitle').textContent = 'Tambah Karyawan';
+                    form.reset();
+                    editingId = null;
+                }
+                modal.style.display = 'flex';
+            }
 
-        function deleteEmployee(id) {
-            deleteId = id;
-            document.getElementById('deleteModal').classList.add('show');
-        }
+            // Tutup modal
+            function closeModal() {
+                document.getElementById('employeeModal').style.display = 'none';
+            }
 
-        function closeDeleteModal() {
-            document.getElementById('deleteModal').classList.remove('show');
-            deleteId = null;
-        }
-
-        function confirmDelete() {
-            if (deleteId) {
-                employees = employees.filter(e => e.id !== deleteId);
-                renderTable();
+            function closeDeleteModal() {
+                document.getElementById('deleteModal').style.display = 'none';
                 deleteId = null;
-                closeDeleteModal();
             }
-        }
 
-        // Event listeners
-        document.getElementById('searchInput').addEventListener('input', renderTable);
-        document.getElementById('departmentFilter').addEventListener('change', renderTable);
-        document.getElementById('statusFilter').addEventListener('change', renderTable);
-
-        // Close modal when clicking outside
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('modal-overlay')) {
-                closeModal();
-                closeDeleteModal();
+            // Edit karyawan
+            function editEmployee(id) {
+                const emp = employees.find(e => e.id === id);
+                if (emp) {
+                    editingId = id;
+                    document.getElementById('modalTitle').textContent = 'Edit Karyawan';
+                    document.getElementById('employeeId').value = emp.id;
+                    document.getElementById('name').value = emp.name;
+                    document.getElementById('email').value = emp.email;
+                    document.getElementById('employeeModal').style.display = 'flex';
+                }
             }
-        });
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', renderTable);
-    </script>
+            // Simpan karyawan (Tambah/Update)
+            async function saveEmployee() {
+                const form = document.getElementById('employeeForm');
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                const data = {
+                    name: document.getElementById('name').value,
+                    email: document.getElementById('email').value,
+                };
+
+                const url = editingId ? `{{ url('karyawan') }}/${editingId}` : "{{ route('karyawan.tambah') }}";
+                const method = editingId ? 'PUT' : 'POST';
+
+                try {
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                        closeModal();
+                        showToast(result.message);
+                        fetchEmployees(); // Reload data
+                    } else {
+                        alert(result.message || 'Gagal menyimpan data');
+                    }
+                } catch (error) {
+                    console.error(error);
+                    alert('Terjadi kesalahan saat menyimpan.');
+                }
+            }
+
+            // Hapus karyawan
+            function deleteEmployee(id) {
+                deleteId = id;
+                document.getElementById('deleteModal').style.display = 'flex';
+            }
+
+            // Konfirmasi hapus
+            async function confirmDelete() {
+                if (!deleteId) return;
+                try {
+                    const response = await fetch(`{{ url('karyawan') }}/${deleteId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json'
+                        }
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        closeDeleteModal();
+                        showToast(result.message);
+                        fetchEmployees();
+                    } else {
+                        alert(result.message);
+                    }
+                } catch (error) {
+                    alert('Gagal menghapus karyawan.');
+                }
+            }
+
+            // Filter pencarian
+            document.getElementById('searchInput').addEventListener('input', renderTable);
+
+            // Close modal saat klik luar
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('modal-overlay')) {
+                    closeModal();
+                    closeDeleteModal();
+                }
+            });
+
+            // Toast sederhana
+            function showToast(message) {
+                const toast = document.createElement('div');
+                toast.style.cssText = `
+            position: fixed; top: 20px; right: 20px; background: #28a745; color: white;
+            padding: 10px 20px; border-radius: 5px; z-index: 9999; animation: fadeOut 3s forwards;
+        `;
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                setTimeout(() => document.body.removeChild(toast), 3000);
+            }
+
+            // Load data saat halaman dimuat
+            document.addEventListener('DOMContentLoaded', () => {
+                fetchEmployees();
+            });
+        </script>
 </body>
 
 </html>

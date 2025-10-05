@@ -15,20 +15,26 @@ class UnitController extends Controller
         return view('unit.index', compact('units'));
     }
 
-    public function store(Request $request)
+    public function tambah(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'stock' => 'required|integer|min:0',
-            'price' => 'required|numeric|min:0',
+        $request->validate(['name' => 'required|string|max:50']);
+
+        $unit = Unit::create([
+            'name' => $request->name,
+            // tambahkan field lain jika perlu
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Unit berhasil ditambahkan.',
+            'unit' => $unit
+        ]);
+    }
 
-        Unit::create($request->all());
+    public function destroy(Unit $unit)
+    {
+        $unit->delete();
 
-        return response()->json(['success' => true, 'message' => 'Produk berhasil ditambahkan!']);
+        return redirect()->route('unit.index')->with('success', 'Unit berhasil dihapus.');
     }
 }

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="csrf-token-placeholder">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Kelola Unit</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -371,10 +371,17 @@
                             <div class="stats-number" id="total-units">6</div>
                             <div class="stats-label">Total Unit</div>
                         </div>
+                        <div>
+                            <!-- Tombol Kembali -->
+                            <a href="{{ route('dashboard') }}" class="btn btn-secondary btn-custom">
+                                <i class="fas fa-arrow-left me-2"></i>Kembali ke Dashboard
+                            </a>
+                        </div>
                     </div>
                 </div>
 
                 <div class="action-bar">
+
                     <div>
                         <button class="btn btn-primary-custom btn-custom" data-bs-toggle="modal"
                             data-bs-target="#addUnitModal">
@@ -403,20 +410,15 @@
                                     <h5 class="unit-title">{{ $unit->name }}</h5>
                                     <div class="unit-price">{{ $unit->price_per_unit }}</div>
                                     <div class="unit-actions mt-auto">
-                                        <button class="btn btn-warning-custom btn-action edit-unit"
-                                            data-id="{{ $unit->id }}" data-name="{{ $unit->name }}"
-                                            data-price="{{ $unit->price_per_unit }}"data-bs-target="#editUnitModal"
-                                            data-bs-toggle="modal">
-                                            <i class="fas fa-edit me-1"></i>Edit
-                                        </button>
-                                        <button class="btn btn-info-custom btn-action copy-unit" data-id="1"
-                                            data-name="{{ $unit->name }}" data-price="{{ $unit->price_per_unit }}">
-                                            <i class="fas fa-copy me-1"></i>Copy
-                                        </button>
-                                        <button class="btn btn-danger-custom btn-action delete-unit" data-id="1"
-                                            data-name="{{ $unit->name }}">
-                                            <i class="fas fa-trash me-1"></i>Hapus
-                                        </button>
+                                        <form method="POST" action="{{ route('unit.destroy', $unit->id) }}"
+                                            class="d-inline delete-form">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="button" class="btn btn-danger-custom btn-action btn-delete"
+                                                data-name="{{ $unit->name }}">
+                                                <i class="fas fa-trash me-1"></i>Hapus
+                                            </button>
+                                        </form>
                                     </div>
                                 </div>
                             </div>
@@ -455,11 +457,6 @@
                             <input type="text" class="form-control" id="add-name" name="name"
                                 placeholder="Contoh: Pack, Box, Lusin" required>
                         </div>
-                        <div class="mb-3">
-                            <label for="add-price" class="form-label">Harga per Unit</label>
-                            <input type="number" class="form-control" id="add-price" name="price_per_unit"
-                                min="0" step="0.01" placeholder="0" required>
-                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -487,11 +484,6 @@
                             <label for="edit-name" class="form-label">Nama Unit</label>
                             <input type="text" class="form-control" id="edit-name" name="name" required>
                         </div>
-                        <div class="mb-3">
-                            <label for="edit-price" class="form-label">Harga per Unit</label>
-                            <input type="number" class="form-control" id="edit-price" name="price_per_unit"
-                                min="0" step="0.01" required>
-                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -505,48 +497,17 @@
     </div>
 
     <!-- Modal Copy Unit -->
-    <div class="modal fade" id="copyUnitModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-copy me-2"></i>Copy Unit</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <form id="copyUnitForm">
-                        <div class="mb-3">
-                            <label for="copy-name" class="form-label">Nama Unit Baru</label>
-                            <input type="text" class="form-control" id="copy-name" name="name" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="copy-price" class="form-label">Harga per Unit</label>
-                            <input type="number" class="form-control" id="copy-price" name="price_per_unit"
-                                min="0" step="0.01" required>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="button" class="btn btn-info-custom" id="copyUnit">
-                        <span class="btn-text"><i class="fas fa-copy me-2"></i>Copy Unit</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        // Ambil CSRF token
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-        // Elements
-        const unitContainer = document.getElementById('unit-container');
-        const loadingIndicator = document.getElementById('loading-units');
-        const refreshBtn = document.getElementById('refresh-units');
+        // Inisialisasi modal
         const addUnitModal = new bootstrap.Modal(document.getElementById('addUnitModal'));
         const editUnitModal = new bootstrap.Modal(document.getElementById('editUnitModal'));
-        const totalUnitsEl = document.getElementById('total-units');
 
         // Toast notification
         function showToast(message, type = 'success') {
@@ -561,7 +522,6 @@
                     toast.addEventListener('mouseleave', Swal.resumeTimer);
                 }
             });
-
             Toast.fire({
                 icon: type,
                 title: message
@@ -574,7 +534,6 @@
             if (!button.dataset.originalText) {
                 button.dataset.originalText = btnText.innerHTML;
             }
-
             if (loading) {
                 button.disabled = true;
                 btnText.innerHTML = `<span class="loading-spinner me-2"></span>Loading...`;
@@ -584,89 +543,7 @@
             }
         }
 
-        // Refresh unit list
-        async function refreshUnits(event) {
-            try {
-                if (event) setButtonLoading(refreshBtn);
-                loadingIndicator.classList.remove('d-none');
-                unitContainer.innerHTML = '';
-
-                const response = await fetch('', {
-                    method: 'GET',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': csrfToken,
-                        'Accept': 'application/json'
-                    }
-                });
-
-                if (!response.ok) throw new Error('Gagal memuat data unit');
-
-                const data = await response.json();
-                updateUnitDisplay(data.units);
-                updateStats(data.units.length);
-
-                if (event?.target.id === 'refresh-units') {
-                    showToast('Data unit berhasil di-refresh');
-                }
-            } catch (error) {
-                console.error(error);
-                showToast('Gagal memuat data unit', 'error');
-            } finally {
-                loadingIndicator.classList.add('d-none');
-                if (event) setButtonLoading(refreshBtn, false);
-            }
-        }
-
-        // Tampilkan daftar unit
-        function updateUnitDisplay(units) {
-            if (!units || units.length === 0) {
-                unitContainer.innerHTML = `
-            <div class="col-12 text-center py-5">
-                <i class="fas fa-cube fa-3x text-muted"></i>
-                <h5 class="mt-3">Belum ada data unit</h5>
-            </div>
-        `;
-                return;
-            }
-
-            let html = '';
-            units.forEach(unit => {
-                html += `
-            <div class="col-md-4 mb-3" data-unit-id="${unit.id}">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">${unit.name}</h5>
-                        <div class="mt-3 d-flex justify-content-between">
-                            <button class="btn btn-sm btn-warning edit-unit"
-                                    data-id="${unit.id}"
-                                    data-name="${unit.name}">
-                                <i class="fas fa-edit me-1"></i>Edit
-                            </button>
-                            <button class="btn btn-sm btn-danger delete-unit"
-                                    data-id="${unit.id}"
-                                    data-name="${unit.name}">
-                                <i class="fas fa-trash me-1"></i>Hapus
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-            });
-
-            unitContainer.innerHTML = html;
-        }
-
-        // Update jumlah unit
-        function updateStats(count) {
-            totalUnitsEl.textContent = count;
-        }
-
-        // === Event Listeners ===
-        refreshBtn.addEventListener('click', refreshUnits);
-
-        // Tambah unit
+        // ✅ Tambah Unit
         document.getElementById('saveUnit').addEventListener('click', async function() {
             const form = document.getElementById('addUnitForm');
             const formData = new FormData(form);
@@ -675,7 +552,7 @@
             try {
                 setButtonLoading(button);
 
-                const response = await fetch('', {
+                const response = await fetch('{{ route('unit.tambah') }}', {
                     method: 'POST',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
@@ -690,8 +567,9 @@
                 if (response.ok && data.success) {
                     addUnitModal.hide();
                     form.reset();
-                    await refreshUnits();
                     showToast(data.message);
+                    // ✅ Refresh halaman setelah sukses
+                    location.reload();
                 } else {
                     throw new Error(data.message || 'Gagal menambahkan unit');
                 }
@@ -702,14 +580,13 @@
             }
         });
 
-        // Delegasi event untuk tombol edit dan delete
+        // ✅ Edit Unit: Isi form saat tombol diklik
         document.addEventListener('click', function(e) {
-            // Edit unit
-            if (e.target.closest('.edit-unit')) {
-                const button = e.target.closest('.edit-unit');
-                const id = button.dataset.id;
-                const name = button.dataset.name;
-                const price = button.dataset.price;
+            const editBtn = e.target.closest('.edit-unit');
+            if (editBtn) {
+                const id = editBtn.dataset.id;
+                const name = editBtn.dataset.name;
+                const price = editBtn.dataset.price;
 
                 document.getElementById('edit-id').value = id;
                 document.getElementById('edit-name').value = name;
@@ -717,49 +594,9 @@
 
                 editUnitModal.show();
             }
-
-            // Hapus unit
-            if (e.target.closest('.delete-unit')) {
-                const button = e.target.closest('.delete-unit');
-                const id = button.dataset.id;
-                const name = button.dataset.name;
-
-                Swal.fire({
-                    title: `Yakin hapus unit "${name}"?`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#764ba2',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Ya, hapus!',
-                    cancelButtonText: 'Batal'
-                }).then(async (result) => {
-                    if (result.isConfirmed) {
-                        try {
-                            const response = await fetch(`/units/${id}`, {
-                                method: 'DELETE',
-                                headers: {
-                                    'X-Requested-With': 'XMLHttpRequest',
-                                    'X-CSRF-TOKEN': csrfToken,
-                                    'Accept': 'application/json'
-                                }
-                            });
-
-                            const data = await response.json();
-                            if (response.ok && data.success) {
-                                await refreshUnits();
-                                showToast(data.message);
-                            } else {
-                                throw new Error(data.message || 'Gagal menghapus unit.');
-                            }
-                        } catch (error) {
-                            showToast(error.message, 'error');
-                        }
-                    }
-                });
-            }
         });
 
-        // Update unit
+        // ✅ Update Unit
         document.getElementById('updateUnit').addEventListener('click', async function() {
             const form = document.getElementById('editUnitForm');
             const formData = new FormData(form);
@@ -785,15 +622,40 @@
 
                 if (response.ok && data.success) {
                     editUnitModal.hide();
-                    await refreshUnits();
                     showToast(data.message);
+                    // ✅ Refresh halaman setelah update
+                    location.reload();
                 } else {
-                    throw new Error(data.message || 'Terjadi kesalahan saat memperbarui unit');
+                    throw new Error(data.message || 'Gagal memperbarui unit');
                 }
             } catch (error) {
                 showToast(error.message, 'error');
             } finally {
                 setButtonLoading(button, false);
             }
+        });
+
+        // ✅ Hapus Unit
+        document.addEventListener('click', function(e) {
+            const button = e.target.closest('.btn-delete');
+            if (!button) return;
+
+            const form = button.closest('form');
+            const name = button.dataset.name;
+
+            Swal.fire({
+                title: 'Hapus unit?',
+                text: `Yakin ingin menghapus "${name}"?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, hapus!',
+                cancelButtonText: 'Batal'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    form.submit(); // Submit form asli
+                }
+            });
         });
     </script>

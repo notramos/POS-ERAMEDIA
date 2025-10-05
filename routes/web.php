@@ -22,22 +22,31 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
 
 // OWNER Only
 Route::middleware(['auth', 'role:owner'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::get('/products', [ProductController::class, 'index'])->name('products.index');
     Route::post('/products', [ProductController::class, 'store'])->name('products.store');
     Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
     Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
-
+    Route::post('/units', [UnitController::class, 'store'])->name('unit.tambah');
     Route::get('/units', [UnitController::class, 'index'])->name('unit.index');
+    Route::post('/unit/tambah', [UnitController::class, 'tambah'])->name('unit.tambah');
+    Route::put('/units/{id}', [UnitController::class, 'update']);
+    Route::delete('/units/{unit}', [UnitController::class, 'destroy'])->name('unit.destroy');
+
+    Route::get('/data', [UserController::class, 'getData'])->name('karyawan.data');
+    Route::post('/tambah', [UserController::class, 'store'])->name('karyawan.tambah');
+    Route::put('karyawan/{id}', [UserController::class, 'update']);
+    Route::delete('karyawan/{id}', [UserController::class, 'destroy']);
 });
 
 // OWNER + KARYAWAN
 Route::middleware(['auth', 'role:owner,karyawan'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
     Route::get('/laporan/{id}', [LaporanController::class, 'show']);
     Route::get('/kasir', [TransactionController::class, 'index'])->name('kasir.index');
     Route::get('/transaksi/{transaction}', [TransactionController::class, 'show'])->name('kasir.detail');
     Route::post('/kasir', [TransactionController::class, 'store'])->name('kasir.store');
     Route::get('/transactions/{transaction}/receipt', [TransactionController::class, 'receipt'])->name('transactions.receipt');
+    Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy'])->name('kasir.delete');
 });

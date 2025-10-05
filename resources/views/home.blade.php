@@ -392,12 +392,35 @@
     <!-- Sidebar -->
     <aside class="sidebar">
         <ul class="sidebar-menu">
-            <li><a href="/dashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-            <li><a href="/kasir"><i class="fas fa-cash-register"></i> Kasir</a></li>
-            <li><a href="/products"><i class="fas fa-box"></i> Produk</a></li>
-            <li><a href="/users"><i class="fas fa-users"></i> Pengguna</a></li>
-            <li><a href="/units"><i class="fas fa-receipt"></i> Unit</a></li>
-            <li><a href="/laporan"><i class="fas fa-chart-bar"></i> Laporan Transaksi</a></li>
+            @if (auth()->user()->role_id == 1)
+                {{-- Menu untuk ADMIN --}}
+                <li><a href="/dashboard" class="{{ request()->is('dashboard') ? 'active' : '' }}">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a></li>
+                <li><a href="/kasir" class="{{ request()->is('kasir') ? 'active' : '' }}">
+                        <i class="fas fa-cash-register"></i> Kasir
+                    </a></li>
+                <li><a href="/products" class="{{ request()->is('products') ? 'active' : '' }}">
+                        <i class="fas fa-box"></i> Produk
+                    </a></li>
+                <li><a href="/users" class="{{ request()->is('users') ? 'active' : '' }}">
+                        <i class="fas fa-users"></i> Pengguna
+                    </a></li>
+                <li><a href="/units" class="{{ request()->is('units') ? 'active' : '' }}">
+                        <i class="fas fa-receipt"></i> Unit
+                    </a></li>
+                <li><a href="/laporan" class="{{ request()->is('laporan') ? 'active' : '' }}">
+                        <i class="fas fa-chart-bar"></i> Laporan Transaksi
+                    </a></li>
+            @elseif(auth()->user()->role_id == 2)
+                {{-- Menu untuk KARYAWAN --}}
+                <li><a href="/kasir" class="{{ request()->is('kasir') ? 'active' : '' }}">
+                        <i class="fas fa-cash-register"></i> Kasir
+                    </a></li>
+                <li><a href="/laporan" class="{{ request()->is('laporan') ? 'active' : '' }}">
+                        <i class="fas fa-chart-bar"></i> Laporan Transaksi
+                    </a></li>
+            @endif
         </ul>
     </aside>
 
@@ -407,57 +430,74 @@
             <h1 class="dashboard-title">Selamat Datang di ERAMEDIA POS</h1>
             <p class="dashboard-subtitle">Kelola toko Anda dengan mudah dan efisien</p>
         </div>
-
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-header">
-                    <span class="stat-title">Penjualan Hari Ini</span>
-                    <div class="stat-icon" style="background: linear-gradient(45deg, #28a745, #20c997);">
-                        <i class="fas fa-dollar-sign"></i>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="stats-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Penjualan Hari Ini -->
+                <div class="stat-card bg-white p-6 rounded-xl shadow-md">
+                    <div class="stat-header flex justify-between items-center mb-4">
+                        <span class="stat-title font-semibold text-gray-700">Penjualan Hari Ini</span>
+                        <div class="stat-icon w-12 h-12 rounded-lg flex items-center justify-center text-white"
+                            style="background: linear-gradient(45deg, #28a745, #20c997);">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value text-2xl font-bold text-gray-900">
+                        Rp {{ number_format($penjualanHariIni, 0, ',', '.') }}
+                    </div>
+                    <div class="stat-change text-green-600 text-sm mt-1">
+                        <i class="fas fa-arrow-up"></i> +12.5% dari kemarin
                     </div>
                 </div>
-                <div class="stat-value">Rp 2,450,000</div>
-                <div class="stat-change">
-                    <i class="fas fa-arrow-up"></i> +12.5% dari kemarin
-                </div>
-            </div>
 
-            <div class="stat-card">
-                <div class="stat-header">
-                    <span class="stat-title">Transaksi</span>
-                    <div class="stat-icon" style="background: linear-gradient(45deg, #007bff, #6610f2);">
-                        <i class="fas fa-shopping-cart"></i>
+                <!-- Transaksi -->
+                <div class="stat-card bg-white p-6 rounded-xl shadow-md">
+                    <div class="stat-header flex justify-between items-center mb-4">
+                        <span class="stat-title font-semibold text-gray-700">Transaksi</span>
+                        <div class="stat-icon w-12 h-12 rounded-lg flex items-center justify-center text-white"
+                            style="background: linear-gradient(45deg, #007bff, #6610f2);">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value text-2xl font-bold text-gray-900">
+                        {{ $transaksiHariIni }}
+                    </div>
+                    <div class="stat-change text-green-600 text-sm mt-1">
+                        <i class="fas fa-arrow-up"></i> +8.3% dari kemarin
                     </div>
                 </div>
-                <div class="stat-value">127</div>
-                <div class="stat-change">
-                    <i class="fas fa-arrow-up"></i> +8.3% dari kemarin
-                </div>
-            </div>
 
-            <div class="stat-card">
-                <div class="stat-header">
-                    <span class="stat-title">Produk Terjual</span>
-                    <div class="stat-icon" style="background: linear-gradient(45deg, #fd7e14, #e83e8c);">
-                        <i class="fas fa-box-open"></i>
+                <!-- Produk Terjual -->
+                <div class="stat-card bg-white p-6 rounded-xl shadow-md">
+                    <div class="stat-header flex justify-between items-center mb-4">
+                        <span class="stat-title font-semibold text-gray-700">Produk Terjual</span>
+                        <div class="stat-icon w-12 h-12 rounded-lg flex items-center justify-center text-white"
+                            style="background: linear-gradient(45deg, #fd7e14, #e83e8c);">
+                            <i class="fas fa-box-open"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value text-2xl font-bold text-gray-900">
+                        {{ $produkTerjual ?? 0 }}
+                    </div>
+                    <div class="stat-change text-green-600 text-sm mt-1">
+                        <i class="fas fa-arrow-up"></i> +15.2% dari kemarin
                     </div>
                 </div>
-                <div class="stat-value">456</div>
-                <div class="stat-change">
-                    <i class="fas fa-arrow-up"></i> +15.2% dari kemarin
-                </div>
-            </div>
 
-            <div class="stat-card">
-                <div class="stat-header">
-                    <span class="stat-title">Total Pelanggan</span>
-                    <div class="stat-icon" style="background: linear-gradient(45deg, #6f42c1, #e83e8c);">
-                        <i class="fas fa-users"></i>
+                <!-- Total Pelanggan -->
+                <div class="stat-card bg-white p-6 rounded-xl shadow-md">
+                    <div class="stat-header flex justify-between items-center mb-4">
+                        <span class="stat-title font-semibold text-gray-700">Total Pelanggan</span>
+                        <div class="stat-icon w-12 h-12 rounded-lg flex items-center justify-center text-white"
+                            style="background: linear-gradient(45deg, #6f42c1, #e83e8c);">
+                            <i class="fas fa-users"></i>
+                        </div>
                     </div>
-                </div>
-                <div class="stat-value">1,234</div>
-                <div class="stat-change">
-                    <i class="fas fa-arrow-up"></i> +5.2% dari bulan lalu
+                    <div class="stat-value text-2xl font-bold text-gray-900">
+                        {{ $totalPelanggan }}
+                    </div>
+                    <div class="stat-change text-green-600 text-sm mt-1">
+                        <i class="fas fa-arrow-up"></i> +5.2% dari bulan lalu
+                    </div>
                 </div>
             </div>
         </div>

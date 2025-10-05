@@ -5,7 +5,6 @@
             {{-- Logo / Brand --}}
             <div class="flex items-center">
                 <a href="" class="flex-shrink-0 flex items-center">
-                    <img class="h-8 w-auto" src="{{ asset('images/logo.png') }}" alt="Logo">
                     <span class="ml-2 text-xl font-bold text-gray-800">{{ config('app.name') }}</span>
                 </a>
             </div>
@@ -16,9 +15,6 @@
                 <div class="relative" x-data="{ open: false }">
                     <button @click="open = !open"
                         class="flex items-center text-sm rounded-full text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                        <img class="h-8 w-8 rounded-full"
-                            src="{{ Auth::user()->avatar ?? asset('images/default-avatar.png') }}"
-                            alt="{{ Auth::user()->name }}">
                         <span class="ml-2">{{ Auth::user()->name }}</span>
                         <svg class="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
@@ -38,22 +34,14 @@
                         <a href="" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                             Profil
                         </a>
-                        @if ($role === 'owner')
-                            <a href="{{ route('dashboard') }}"
-                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                Dashboard
-                            </a>
-                            <a href="{{ route('laporan.index') }}"
-                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                Daftar Transaksi
-                            </a>
-                        @elseif ($role === 'karyawan')
-                            <a href="{{ route('laporan.index') }}"
-                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                Daftar Transaksi
-                            </a>
-                        @endif
-
+                        <a href="{{ route('dashboard') }}"
+                            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            Dashboard
+                        </a>
+                        <a href="{{ route('laporan.index') }}"
+                            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            Daftar Transaksi
+                        </a>
                         <div class="border-t border-gray-100"></div>
                         <form method="POST" action="{{ route('auth.logout') }}">
                             @csrf

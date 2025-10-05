@@ -20,11 +20,11 @@
               <a href="{{ route('kasir.detail', $transaction) }}" class="text-green-600 hover:text-green-700 mr-3">
                   <i class="fas fa-receipt"></i>
               </a>
-              <form method="POST" action="" class="inline-block"
-                  onsubmit="return confirm('Are you sure you want to delete this transaction?')">
+              <form method="POST" action="{{ route('kasir.delete', $transaction) }}" class="inline-block delete-form">
                   @csrf
                   @method('DELETE')
-                  <button type="submit" class="text-red-600 hover:text-red-700">
+                  <button type="button" class="text-red-600 hover:text-red-700 delete-btn"
+                      data-id="{{ $transaction->id }}">
                       <i class="fas fa-trash"></i>
                   </button>
               </form>
@@ -38,3 +38,5 @@
           </td>
       </tr>
   @endforelse
+  @push('scripts')
+  @endpush

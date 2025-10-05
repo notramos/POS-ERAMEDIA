@@ -367,6 +367,9 @@
             </div>
 
             <div class="action-bar">
+                <button onclick="window.history.back()" class="btn btn-secondary btn-custom">
+                    <i class="fas fa-arrow-left me-2"></i>Kembali
+                </button>
                 <div>
                     <button class="btn btn-primary-custom btn-custom" data-bs-toggle="modal"
                         data-bs-target="#addProductModal">
