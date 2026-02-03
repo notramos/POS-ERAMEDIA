@@ -12,7 +12,8 @@ class UserController extends Controller
 {
     public function index()
     {
-        return view('user.index'); // Ganti sesuai nama view kamu
+        $users = User::where('role_id', 2)->get();
+        return view('user.user',compact('users')); // Ganti sesuai nama view kamu
     }
 
     public function getData()

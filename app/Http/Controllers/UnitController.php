@@ -11,8 +11,8 @@ class UnitController extends Controller
 {
     public function index()
     {
-        $units = Unit::all();
-        return view('unit.index', compact('units'));
+        $units = Unit::paginate(5);
+        return view('kategori.kategori', compact('units'));
     }
 
     public function tambah(Request $request)
@@ -21,18 +21,14 @@ class UnitController extends Controller
 
         $unit = Unit::create([
             'name' => $request->name,
-            // tambahkan field lain jika perlu
         ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Unit berhasil ditambahkan.',
-            'unit' => $unit
-        ]);
+        return redirect()->route('unit.index')->with('success', 'Kategori berhasil ditambahkan.');
     }
 
-    public function destroy(Unit $unit)
+    public function destroy($id)
     {
+        $unit = Unit::findOrFail($id);
         $unit->delete();
 
         return redirect()->route('unit.index')->with('success', 'Unit berhasil dihapus.');
