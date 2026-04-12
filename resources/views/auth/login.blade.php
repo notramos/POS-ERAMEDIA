@@ -2,397 +2,86 @@
 <html lang="id">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Eramedia</title>
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Eramedia - Masuk</title>
+
+    <!-- Font Nunito -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS via CDN (untuk kesederhanaan & kecepatan prototipe) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4e73df',
+                        'primary-dark': '#2e59d9'
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #f0f2ff, #e6e9ff);
         }
-
-        .login-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 600px;
-            padding: 40px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .login-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-        }
-
-        .logo-container {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .logo {
-            font-size: 2.5em;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 10px;
-            position: relative;
-        }
-
-        .logo::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 50px;
-            height: 3px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            border-radius: 2px;
-        }
-
-        .welcome-text {
-            color: #666;
-            font-size: 1.1em;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-            position: relative;
-        }
-
-        .form-group label {
-            display: block;
-            color: #333;
-            font-weight: 600;
-            margin-bottom: 8px;
-            font-size: 0.9em;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 15px 20px;
-            border: 2px solid #e1e5e9;
-            border-radius: 12px;
-            font-size: 1em;
-            transition: all 0.3s ease;
-            background: #fff;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-            transform: translateY(-2px);
-        }
-
-        .form-group input:hover {
-            border-color: #667eea;
-        }
-
-        .forgot-password {
-            text-align: right;
-            margin-bottom: 25px;
-        }
-
-        .forgot-password a {
-            color: #667eea;
-            text-decoration: none;
-            font-size: 0.9em;
-            transition: color 0.3s ease;
-        }
-
-        .forgot-password a:hover {
-            color: #764ba2;
-        }
-
-        .login-btn {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .login-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .login-btn:hover::before {
-            left: 100%;
-        }
-
-        .login-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-
-        .divider {
-            text-align: center;
-            margin: 30px 0;
-            position: relative;
-            color: #999;
-        }
-
-        .divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: #e1e5e9;
-        }
-
-        .divider span {
-            background: white;
-            padding: 0 15px;
-            position: relative;
-        }
-
-        .register-link {
-            text-align: center;
-            margin-top: 20px;
-            color: #666;
-        }
-
-        .register-link a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
-            transition: color 0.3s ease;
-        }
-
-        .register-link a:hover {
-            color: #764ba2;
-        }
-
-        .floating-shapes {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            overflow: hidden;
-        }
-
-        .shape {
-            position: absolute;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            animation: float 6s ease-in-out infinite;
-        }
-
-        .shape:nth-child(1) {
-            width: 80px;
-            height: 80px;
-            top: 10%;
-            left: 10%;
-            animation-delay: 0s;
-        }
-
-        .shape:nth-child(2) {
-            width: 120px;
-            height: 120px;
-            top: 70%;
-            right: 10%;
-            animation-delay: 2s;
-        }
-
-        .shape:nth-child(3) {
-            width: 60px;
-            height: 60px;
-            top: 40%;
-            left: 80%;
-            animation-delay: 4s;
-        }
-
-        @keyframes float {
-
-            0%,
-            100% {
-                transform: translateY(0px);
-            }
-
-            50% {
-                transform: translateY(-20px);
-            }
-        }
-
-        @media (max-width: 480px) {
-            .login-container {
-                padding: 30px 20px;
-            }
-
-            .logo {
-                font-size: 2em;
-            }
+        .card-shadow {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
     </style>
 </head>
 
-<body>
-    <div class="floating-shapes">
-        <div class="shape"></div>
-        <div class="shape"></div>
-        <div class="shape"></div>
-    </div>
-
-    <div class="login-container">
-        <div class="logo-container">
-            <div class="logo">Eramedia</div>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md card-shadow bg-white rounded-xl p-8">
+        <div class="text-center mb-8">
+            <h1 class="text-2xl font-bold text-gray-800">POS ERAMEDIA</h1>
+            <p class="text-gray-500 text-sm mt-1">Masuk ke akun Anda</p>
         </div>
 
-        <p class="welcome-text">Selamat datang kembali!</p>
+        @if($errors->any())
+            <div class="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+                {{ $errors->first() }}
+            </div>
+        @endif
 
-        <form id="loginForm">
-            <div class="form-group">
-                <label for="email">Email atau Username</label>
-                <input type="text" id="email" name="email" required>
+        <form method="POST" action="{{ route('auth.login') }}">
+            @csrf
+            <div class="mb-5">
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" name="email" value="{{ old('email') }}" id="email"
+                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
+                    placeholder="contoh@email.com" required>
             </div>
 
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
+            <div class="mb-5">
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input type="password" name="password" id="password"
+                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
+                    placeholder="••••••••" required>
             </div>
 
-            <div class="forgot-password">
-                <a href="javascript:void(0)" onclick="showForgotPassword()">Lupa Password?</a>
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center">
+                    <input type="checkbox" name="remember" id="remember" class="h-4 w-4 text-primary rounded">
+                    <label for="remember" class="ml-2 text-sm text-gray-600">Ingat saya</label>
+                </div>
+                <a href="#" class="text-sm text-primary hover:underline">Lupa password?</a>
             </div>
 
-            <button type="submit" class="login-btn">Masuk</button>
+            <button type="submit"
+                class="w-full bg-primary hover:bg-primary-dark text-white font-semibold py-2.5 rounded-lg transition duration-200">
+                Masuk
+            </button>
         </form>
 
-        <div id="loginError" style="color:red;"></div>
-
-        <div class="divider">
-            <span>atau</span>
-        </div>
-
-        <div class="register-link">
-            Belum punya akun? <button onclick="showRegister()"
-                style="background:none;border:none;color:blue;text-decoration:underline;cursor:pointer;">
-                Daftar sekarang
-            </button>
+        <div class="mt-6 text-center text-sm text-gray-600">
+            Belum punya akun? 
+            <a href="{{ route('auth.register') }}" class="text-primary font-medium hover:underline">Daftar di sini</a>
         </div>
     </div>
-
-    <script>
-        // Form submission handler
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-            try {
-                const response = await fetch('/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': token
-                    },
-                    body: JSON.stringify({
-                        email,
-                        password
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    // Redirect sesuai role
-                    if (data.role === 'owner') {
-                        window.location.href = '/dashboard';
-                    } else {
-                        window.location.href = '/kasir';
-                    }
-                } else {
-                    // Response error dari server (HTTP 401, 422, dst)
-                    document.getElementById('loginError').innerText = data.message || 'Login gagal.';
-                }
-
-            } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('loginError').innerText = 'Terjadi kesalahan saat login.';
-            }
-        });
-
-        // Input animation effects
-        const inputs = document.querySelectorAll('input');
-        inputs.forEach(input => {
-            input.addEventListener('focus', function() {
-                this.parentElement.style.transform = 'scale(1.02)';
-            });
-
-            input.addEventListener('blur', function() {
-                this.parentElement.style.transform = 'scale(1)';
-            });
-        });
-
-        // Forgot password handler
-        function showForgotPassword() {
-            alert('Fitur reset password akan segera tersedia. Hubungi admin untuk bantuan.');
-        }
-
-        // Register handler
-        function showRegister() {
-            window.location.href = "/register";
-        }
-
-        // Add subtle parallax effect to floating shapes
-        document.addEventListener('mousemove', function(e) {
-            const shapes = document.querySelectorAll('.shape');
-            const mouseX = e.clientX / window.innerWidth;
-            const mouseY = e.clientY / window.innerHeight;
-
-            shapes.forEach((shape, index) => {
-                const speed = (index + 1) * 0.5;
-                const x = (mouseX - 0.5) * speed * 20;
-                const y = (mouseY - 0.5) * speed * 20;
-
-                shape.style.transform = `translate(${x}px, ${y}px)`;
-            });
-        });
-    </script>
 </body>
-
 </html>

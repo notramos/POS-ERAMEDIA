@@ -1,79 +1,71 @@
 <?php
 
-// app/Http/Controllers/UserController.php
-
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
     public function index()
     {
-        return view('user.index'); // Ganti sesuai nama view kamu
-    }
-
-    public function getData()
-    {
-        $karyawan = User::where('role_id', 2)
-            ->select('id', 'name', 'email',)
-            ->get();
-
-        return response()->json($karyawan);
+        $users = User::with('role')->get();
+        return view('user.user', compact('users'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name'  => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'phone' => 'nullable|string|max:20',
+            'role'  => 'required|in:owner,karyawan',
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'role_id' => 2,
-            'password' => Hash::make('password'), // password default
+        $role = Role::where('name', $request->role)->firstOrFail();
+
+        User::create([
+            'name'     => $request->name,
+            'email'    => $request->email,
+            'role_id'  => $role->id,
+            'password' => Hash::make('password'),
         ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Karyawan berhasil ditambahkan.',
-            'data' => $user
-        ]);
+        return redirect()->back()->with('success', 'Pengguna berhasil ditambahkan.');
     }
 
     public function update(Request $request, $id)
     {
-        $user = User::where('role_id', 2)->findOrFail($id);
-
+        $user = User::findOrFail($id);
+        Log::info('Updating user: ', $user->toArray());
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name'  => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $id,
-            'phone' => 'nullable|string|max:20',
+            'role'  => 'required|in:owner,karyawan',
+            'password' => 'nullable|string|min:6',
         ]);
 
-        $user->update($request->only('name', 'email', 'phone'));
+        $role = Role::where('name', $request->role)->firstOrFail();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Karyawan berhasil diperbarui.',
-            'data' => $user
+        $user->update([
+            'name'    => $request->name,
+            'email'   => $request->email,
+            'role_id' => $role->id,
+            'password' => $request->filled('password') ? Hash::make($request->password) : $user->password,
         ]);
+
+        Log::info('Updated user: ', $user->toArray());
+        return redirect()->back()->with('success', 'Pengguna berhasil diperbarui.');
     }
 
     public function destroy($id)
     {
-        $user = User::where('role_id', 2)->findOrFail($id);
+        // Opsional: cegah hapus owner jika hanya ada satu
+        $user = User::findOrFail($id);
         $user->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Karyawan berhasil dihapus.'
-        ]);
+        return redirect()->back()->with('success', 'Pengguna berhasil dihapus.');
     }
 }

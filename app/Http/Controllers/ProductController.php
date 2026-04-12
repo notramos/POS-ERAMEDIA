@@ -2,110 +2,168 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
-use App\Models\Unit;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use App\Models\Product;
+use App\Models\Supplier;
+use App\Models\SupplierItem;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
 
 class ProductController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
-        // [PERBAIKAN 1] Menggunakan latest()->get() agar produk terbaru muncul di atas.
-        $products = Product::latest()->get();
-        $units = Unit::latest()->get();
-        if ($request->ajax()) {
-            // [PERBAIKAN 2] Mengirim JSON dengan kunci 'products' agar sesuai dengan JavaScript.
-            return response()->json([
-                'products' => $products
-            ]);
+        $query = Product::with('supplier');
+
+        if ($request->filled('search')) {
+            $query->where('name', 'LIKE', "%{$request->search}%");
         }
 
-        // Kode ini sudah benar untuk memuat halaman pertama kali.
-        return view('product.index', compact('products', 'units'));
+        $products = $query->paginate(10);
+        $suppliers = Supplier::all();
+
+        return view('product.product', compact('products', 'suppliers'));
     }
 
-    /**
-     * Menampilkan form untuk membuat resource baru.
-     */
-    public function create()
-    {
-        // Tidak digunakan dalam aplikasi AJAX ini
-    }
-
-    /**
-     * Menyimpan resource baru ke dalam storage.
-     */
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'stock' => 'required|integer|min:0',
+        $request->validate([
+            'supplier_id' => 'required|exists:suppliers,id',
+            'item_name' => 'required|string',
             'price' => 'required|numeric|min:0',
-            'unit_id' => 'required|exists:units,id',
+            'stock' => 'required|integer|min:1',
             'detail' => 'nullable|string',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
+        try {
+            DB::beginTransaction();
+
+            $supplierItem = SupplierItem::where('supplier_id', $request->supplier_id)
+                ->where('name', $request->item_name)
+                ->firstOrFail();
+
+            Log::info('Found supplier item: ', $supplierItem->toArray());
+
+            // Ensure we use 'stock' from request consistently
+            if ($supplierItem->stok < $request->stock) {
+                Log::warning('Insufficient stock in supplier item', [
+                    'requested' => $request->stock,
+                    'available' => $supplierItem->stok,
+                ]);
+                // Kembalikan sebagai validation error + session error agar modal terbuka ulang dan toast muncul
+                Log::info('Returning insufficient stock validation', ['requested' => $request->stock, 'available' => $supplierItem->stok]);
+                return back()
+                    ->withErrors(['stock' => "Stok tidak mencukupi. Tersedia: {$supplierItem->stok}"])
+                    ->withInput()
+                    ->with('error', "Stok tidak mencukupi. Tersedia: {$supplierItem->stok}");
+            }
+
+            // Kurangi stok di supplier
+            $supplierItem->decrement('stok', $request->stock);
+
+            Product::create([
+                'name' => $supplierItem->name,
+                'price' => $request->price,
+                'stock' => $request->stock,
+                'supplier_id' => $supplierItem->supplier_id,
+                'unit_id' => $supplierItem->unit_id,
+                'detail' => $request->detail,
+            ]);
+            Log::info('Product created successfully');
+            DB::commit();
+            return back()->with('success', 'Produk berhasil ditambahkan.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Product store error: ' . $e->getMessage());
+            return back()->with('error', 'Gagal menambahkan produk.');
         }
-
-        Product::create($request->all());
-
-        return response()->json(['success' => true, 'message' => 'Produk berhasil ditambahkan!']);
     }
 
-    /**
-     * Menampilkan resource yang spesifik.
-     */
-    public function show(Product $product)
+    public function update(Request $request, $id)
     {
-        // Tidak digunakan dalam aplikasi AJAX ini
-    }
-
-    /**
-     * Menampilkan form untuk mengedit resource yang spesifik.
-     */
-    public function edit(Product $product)
-    {
-        // Tidak digunakan dalam aplikasi AJAX ini
-    }
-
-    /**
-     * Memperbarui resource yang ada di dalam storage.
-     */
-    public function update(Request $request, Product $product)
-    {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'stock' => 'required|integer|min:0',
+        $product = Product::findOrFail($id);
+        $request->validate([
             'price' => 'required|numeric|min:0',
-            'unit_id' => 'required|exists:units,id',
+            'stock' => 'required|integer|min:0',
             'detail' => 'nullable|string',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
+        // Hitung selisih stok (product uses 'stock' attribute)
+        $oldStock = $product->stock;
+        $newStock = $request->stock;
+        $diff = $newStock - $oldStock;
+
+        if ($diff > 0) {
+            // Tambah stok di product → ambil dari supplier
+            $supplierItem = SupplierItem::where('supplier_id', $product->supplier_id)
+                ->where('name', $product->name)
+                ->first();
+            if ($supplierItem && $supplierItem->stok >= $diff) {
+                $supplierItem->decrement('stok', $diff);
+            } else {
+                return back()->withErrors(['stock' => 'Stok di supplier tidak mencukupi untuk penambahan.']);
+            }
+        } elseif ($diff < 0) {
+            // Kurangi stok di product → kembalikan ke supplier
+            $supplierItem = SupplierItem::where('supplier_id', $product->supplier_id)
+                ->where('name', $product->name)
+                ->first();
+            if ($supplierItem) {
+                $supplierItem->increment('stok', abs($diff));
+            }
         }
 
-        $product->update($request->all());
+        $product->update([
+            'price' => $request->price,
+            'stock' => $newStock,
+            'detail' => $request->detail,
+        ]);
 
-        return response()->json(['success' => true, 'message' => 'Produk berhasil diperbarui!']);
+        return back()->with('success', 'Produk berhasil diperbarui.');
     }
 
-    /**
-     * Menghapus resource dari storage.
-     */
-    public function destroy(Product $product)
+    public function destroy($id)
     {
         try {
+            DB::beginTransaction();
+
+            $product = Product::findOrFail($id);
+
+            $supplierItem = SupplierItem::where('supplier_id', $product->supplier_id)
+                ->where('name', $product->name)
+                ->first();
+
+            if ($supplierItem) {
+                $supplierItem->increment('stok', $product->stock);
+            }
+
             $product->delete();
-            return response()->json(['success' => true, 'message' => 'Produk berhasil dihapus!']);
+
+            DB::commit();
+            return back()->with('success', 'Produk dihapus dan stok dikembalikan ke supplier.');
+
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal menghapus produk.'], 500);
+            DB::rollBack();
+            Log::error('Product delete error: ' . $e->getMessage());
+            return back()->with('error', 'Gagal menghapus produk.');
         }
+    }
+
+    public function getSupplierItems($supplierId)
+    {
+        $items = SupplierItem::where('supplier_id', $supplierId)
+                    ->where('stok', '>', 0)
+                    ->with('unit')
+                    ->get()
+                    ->map(fn($item) => [
+                        'name' => $item->name,
+                        'purchase_price' => $item->price,
+                        'stock' => $item->stok,
+                        'unit_id' => $item->unit_id,
+                        'unit_name' => $item->unit?->name,
+                    ]);
+        return response()->json($items);
     }
 }

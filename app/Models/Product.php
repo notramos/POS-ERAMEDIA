@@ -10,6 +10,7 @@ class Product extends Model
     'name',
     'price',
     'stock',
+    'supplier_id',
     'unit_id',
     'detail',
   ];
@@ -23,5 +24,10 @@ class Product extends Model
   public function unit()
   {
     return $this->belongsTo(Unit::class);
+  }
+
+  public function supplier()
+  {
+    return $this->belongsTo(Supplier::class);
   }
 }
