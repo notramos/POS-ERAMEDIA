@@ -17,7 +17,7 @@
 
     @auth
         {{-- Kasir visible to both owner and karyawan --}}
-        @if(in_array(optional(auth()->user()->role)->name, ['owner', 'karyawan']))
+        @if(in_array(optional(auth()->user()->role)->name, ['admin', 'karyawan']))
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('kasir.index') }}">
                     <i class="fas fa-fw fa-receipt"></i>
@@ -29,7 +29,7 @@
        
 
         {{-- Master data: owner only --}}
-        @if(optional(auth()->user()->role)->name === 'owner')
+        @if(optional(auth()->user()->role)->name === 'admin')
          <hr class="sidebar-divider">
             <div class="sidebar-heading">Master Data</div>
             <li class="nav-item">
@@ -62,7 +62,7 @@
         <div class="sidebar-heading">Laporan</div>
 
         {{-- Penjualan visible to both owner and karyawan --}}
-        @if(in_array(optional(auth()->user()->role)->name, ['owner', 'karyawan']))
+        @if(in_array(optional(auth()->user()->role)->name, ['admin', 'karyawan']))
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('transactions.list') }}">
                     <i class="fas fa-fw fa-receipt"></i>
@@ -72,7 +72,7 @@
         @endif
 
         {{-- Pembelian: owner only --}}
-        @if(auth()->user()->role->name === 'owner')
+        @if(optional(auth()->user()->role)->name === 'admin')
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('purchase.purchase') }}">
                     <i class="fas fa-fw fa-shopping-cart"></i>

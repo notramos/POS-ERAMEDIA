@@ -1,6 +1,5 @@
 <script>
 (function () {
-    // Global createToast available to all pages
     function createToast(type, message) {
         if (!message) return;
 
@@ -21,72 +20,100 @@
             document.body.appendChild(toastContainer);
         }
 
-        const bgColor = type === 'success' ? '#d4edda' : type === 'info' ? '#d1ecf1' : '#f8d7da';
-        const borderColor = type === 'success' ? '#c3e6cb' : type === 'info' ? '#bee5eb' : '#f5c6cb';
-        const textColor = type === 'success' ? '#155724' : type === 'info' ? '#0c5460' : '#721c24';
+        const config = {
+            success: { bg: '#d1fae5', border: '#10b981', icon: '✓', color: '#065f46' },
+            error: { bg: '#fee2e2', border: '#ef4444', icon: '✕', color: '#991b1b' },
+            info: { bg: '#dbeafe', border: '#3b82f6', icon: 'ℹ', color: '#1e40af' },
+            warning: { bg: '#fef3c7', border: '#f59e0b', color: '#92400e' }
+        };
+        const c = config[type] || config.info;
 
         const toast = document.createElement('div');
         toast.style.cssText = `
-            background-color: ${bgColor};
-            border: 1px solid ${borderColor};
-            color: ${textColor};
-            padding: 12px 20px;
-            border-radius: 6px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            max-width: 350px;
+            background-color: ${c.bg};
+            border: 2px solid ${c.border};
+            color: ${c.color};
+            padding: 14px 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            min-width: 280px;
+            max-width: 400px;
             pointer-events: auto;
-            transform: translateX(100%);
+            transform: translateX(120%);
             opacity: 0;
-            transition: transform .25s ease, opacity .25s ease;
+            transition: transform .3s ease, opacity .3s ease;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         `;
 
-        // Optional icon
-        const icon = document.createElement('span');
-        icon.innerHTML = type === 'success' ? '✅' : type === 'info' ? 'ℹ️' : '⚠️';
-        icon.style.fontSize = '1rem';
+        const icon = document.createElement('div');
+        icon.innerHTML = c.icon;
+        icon.style.cssText = `
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: ${c.border};
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            flex-shrink: 0;
+        `;
 
-        const text = document.createElement('div');
+        const content = document.createElement('div');
+        content.style.flex = '1';
+        
+        const title = document.createElement('strong');
+        title.textContent = type === 'success' ? 'Berhasil' : type === 'error' ? 'Gagal' : type === 'warning' ? 'Peringatan' : 'Info';
+        title.style.display = 'block';
+        title.style.marginBottom = '2px';
+        
+        const text = document.createElement('span');
         text.textContent = message;
+        text.style.fontSize = '14px';
+        
+        content.appendChild(title);
+        content.appendChild(text);
 
         const closeBtn = document.createElement('button');
         closeBtn.type = 'button';
-        closeBtn.innerHTML = '&times;';
-        closeBtn.style.cssText = 'background:none;border:none;font-size:1.1rem;margin-left:8px;cursor:pointer;color:inherit;';
+        closeBtn.innerHTML = '×';
+        closeBtn.style.cssText = 'background:none;border:none;font-size:1.5rem;cursor:pointer;color:inherit;padding:0;line-height:1;';
         closeBtn.addEventListener('click', () => {
-            toast.remove();
-            if (toastContainer.children.length === 0) toastContainer.remove();
+            removeToast(toast, toastContainer);
         });
 
         toast.appendChild(icon);
-        toast.appendChild(text);
+        toast.appendChild(content);
         toast.appendChild(closeBtn);
 
-        // Insert and animate
         toastContainer.appendChild(toast);
-        // allow DOM insertion then animate
+        
         requestAnimationFrame(() => {
             toast.style.transform = 'translateX(0)';
             toast.style.opacity = '1';
         });
 
-        // Auto remove
         setTimeout(() => {
-            toast.style.transform = 'translateX(100%)';
-            toast.style.opacity = '0';
-            setTimeout(() => {
-                toast.remove();
-                if (toastContainer.children.length === 0) toastContainer.remove();
-            }, 300);
-        }, 4000);
+            removeToast(toast, toastContainer);
+        }, 4500);
     }
 
-    // Expose globally
+    function removeToast(toast, container) {
+        toast.style.transform = 'translateX(120%)';
+        toast.style.opacity = '0';
+        setTimeout(() => {
+            toast.remove();
+            if (container.children.length === 0) container.remove();
+        }, 300);
+    }
+
     window.createToast = createToast;
 
-    // Show flash sessions centrally
     document.addEventListener('DOMContentLoaded', function () {
         @if(session()->has('success'))
             createToast('success', @json(session('success')));
@@ -95,4 +122,5 @@
         @endif
     });
 })();
+</script>
 </script>

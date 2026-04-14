@@ -8,39 +8,39 @@
     <!-- Filter Tanggal -->
     <div class="row mb-4">
             <div class="col-md-12">
-                <form method="GET" class="row g-3 align-items-end">
+        <form method="GET" class="row g-3 align-items-end">
                     <div class="col-sm-4 col-md-3">
                         <label for="start" class="form-label text-xs text-gray-600">Dari</label>
                         <input type="date" name="start" id="start"
                             value="{{ request('start') }}"
                             class="form-control form-control-sm">
-                    </div>
+            </div>
 
                     <div class="col-sm-4 col-md-3">
                         <label for="end" class="form-label text-xs text-gray-600">Sampai</label>
                         <input type="date" name="end" id="end"
                             value="{{ request('end') }}"
                             class="form-control form-control-sm">
-                    </div>
+            </div>
 
                     <div class="col-sm-4 col-md-2">
                         <button type="submit" class="btn btn-primary btn-sm w-100">
                             Terapkan
-                        </button>
-                    </div>
+                </button>
+            </div>
 
-                    @if(request()->has('start') || request()->has('end'))
+            @if(request()->has('start') || request()->has('end'))
                         <div class="col-sm-4 col-md-3">
                             <a href="{{ route('dashboard') }}"
                                 class="btn btn-outline-secondary btn-sm w-100">
                                 Reset Filter
-                            </a>
-                        </div>
-                    @endif
+                    </a>
+                </div>
+            @endif
 
-                </form>
+        </form>
             </div>
-        </div>
+    </div>
 
 
     <!-- Cards -->
@@ -115,16 +115,16 @@
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">
                         Penjualan vs Pembelian
-                        @if(request('start') && request('end'))
+                @if(request('start') && request('end'))
                             <small>({{ \Carbon\Carbon::parse(request('start'))->format('d M Y') }} s/d {{ \Carbon\Carbon::parse(request('end'))->format('d M Y') }})</small>
                         @else
                             <small>(Semua Data)</small>
-                        @endif
+                @endif
                     </h6>
-                </div>
+            </div>
                 <div class="card-body">
                     <div class="chart-area" style="height: 300px;">
-                        <canvas id="salesPurchaseChart"></canvas>
+                    <canvas id="salesPurchaseChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -135,7 +135,7 @@
             <div class="card shadow">
                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <h6 class="m-0 font-weight-bold text-warning">Produk Terjual per Bulan</h6>
-                    <form method="GET" class="d-inline">
+                <form method="GET" class="d-inline">
                         @if(request('start'))
                             <input type="hidden" name="start" value="{{ request('start') }}">
                         @endif
@@ -143,17 +143,17 @@
                             <input type="hidden" name="end" value="{{ request('end') }}">
                         @endif
                         <select name="tahun_produk" class="form-control form-control-sm d-inline w-auto" onchange="this.form.submit()">
-                            @foreach($tahun_list as $thn)
+                        @foreach($tahun_list as $thn)
                                 <option value="{{ $thn }}" {{ $thn == $tahun_dipilih ? 'selected' : '' }}>
                                     {{ $thn }}
                                 </option>
-                            @endforeach
-                        </select>
-                    </form>
-                </div>
+                        @endforeach
+                    </select>
+                </form>
+            </div>
                 <div class="card-body">
                     <div class="chart-bar" style="height: 300px;">
-                        <canvas id="productSoldChart"></canvas>
+                    <canvas id="productSoldChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -165,7 +165,6 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Grafik 1: Penjualan vs Pembelian
     const ctx1 = document.getElementById('salesPurchaseChart').getContext('2d');
     new Chart(ctx1, {
         type: 'line',
@@ -178,7 +177,7 @@
                     borderColor: '#4e73df',
                     backgroundColor: 'rgba(78, 115, 223, 0.05)',
                     borderWidth: 2,
-                    fill: true,
+                fill: true,
                     tension: 0.3
                 },
                 {
@@ -187,7 +186,7 @@
                     borderColor: '#e74a3b',
                     backgroundColor: 'rgba(231, 74, 59, 0.05)',
                     borderWidth: 2,
-                    fill: true,
+                fill: true,
                     tension: 0.3
                 }
             ]
@@ -228,12 +227,22 @@
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: { 
-                y: { 
-                    beginAtZero: true, 
-                    ticks: { precision: 0 } 
-                } 
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#1e293b',
+                    titleFont: { size: 13, weight: '600' },
+                    bodyFont: { size: 12 },
+                    padding: 12,
+                    cornerRadius: 8
+                }
             },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { precision: 0 } 
+                    }
+                },
             plugins: { legend: { display: false } }
         }
     });

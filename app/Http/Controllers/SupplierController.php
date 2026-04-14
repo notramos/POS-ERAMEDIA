@@ -2,18 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Supplier;
-class SupplerController extends Controller
+use Illuminate\Http\Request;
+
+class SupplierController extends Controller
 {
     public function index()
     {
-        try{
+        try {
             $suppliers = Supplier::with('supplierItems')->get();
+
             return view('supplier.supplier', compact('suppliers'));
         } catch (\Exception $e) {
             dd($e->getMessage());
-            return redirect()->back()->with('error', 'error dalam mengambil data.');        
+
+            return redirect()->back()->with('error', 'error dalam mengambil data.');
         }
     }
 
@@ -31,7 +34,7 @@ class SupplerController extends Controller
 
     public function update(Request $request, Supplier $supplier)
     {
-        
+
         $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'nullable|string|max:500',
@@ -46,9 +49,10 @@ class SupplerController extends Controller
     {
         try {
             $supplier->delete();
+
             return redirect()->route('supplier.supplier')->with('success', 'Supplier berhasil dihapus!');
         } catch (\Exception $e) {
-            return redirect()->route('supplier.supplier')->with('error', 'Gagal menghapus supplier: ' . $e->getMessage());
+            return redirect()->route('supplier.supplier')->with('error', 'Gagal menghapus supplier: '.$e->getMessage());
         }
     }
 }

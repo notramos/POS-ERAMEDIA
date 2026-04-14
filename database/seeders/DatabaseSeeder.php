@@ -23,7 +23,17 @@ class DatabaseSeeder extends Seeder
         //     ProductSeeder::class,
         // ]);
         $this->call([
+            RoleSeeder::class,
             UserSeeder::class,
+            UnitSeeder::class,
+            CategorySeeder::class,
+            SupplierSeeder::class,
+            SupplierItemSeeder::class,
+            ProductSeeder::class,
+            PurchaseSeeder::class,
+            PurchaseItemSeeder::class,
+            TransactionSeeder::class,
+            TransactionDetailSeeder::class,
         ]);
     }
 }

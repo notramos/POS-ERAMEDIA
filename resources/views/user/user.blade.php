@@ -94,7 +94,7 @@
                     <div class="form-group">
                         <label>Role</label>
                         <select name="role" id="userRole" class="form-control" required>
-                            <option value="owner">Owner</option>
+                            <option value="admin">Admin</option>
                             <option value="karyawan">Karyawan</option>
                         </select>
                     </div>

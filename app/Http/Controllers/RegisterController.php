@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\User;
 
 class RegisterController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         return view('auth.register');
     }
@@ -25,10 +25,11 @@ class RegisterController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => bcrypt($request->password),
-            'role_id' => 1, 
+            'role_id' => 1,
         ]);
 
         Auth::login($user);
+
         return redirect()->route('dashboard')->with('success', 'Registrasi berhasil');
     }
 }

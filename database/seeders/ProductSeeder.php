@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\Product;
+use Illuminate\Database\Seeder;
 
 class ProductSeeder extends Seeder
 {
@@ -13,11 +12,12 @@ class ProductSeeder extends Seeder
      */
     public function run(): void
     {
-         Product::insert([
+        Product::insert([
             [
                 'name' => 'Indomie Goreng',
                 'price' => 3500,
                 'stock' => 100,
+                'detail' => 'Indomie rasa ayam special',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -25,6 +25,7 @@ class ProductSeeder extends Seeder
                 'name' => 'Aqua 600ml',
                 'price' => 4000,
                 'stock' => 200,
+                'detail' => 'Air mineral 600ml',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -32,6 +33,7 @@ class ProductSeeder extends Seeder
                 'name' => 'Roti Tawar',
                 'price' => 12000,
                 'stock' => 50,
+                'detail' => 'Roti tawar regular',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],

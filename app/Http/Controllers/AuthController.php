@@ -5,10 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-
 class AuthController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         return view('auth.login');
     }
@@ -33,7 +32,7 @@ class AuthController extends Controller
 
         if ($request->expectsJson()) {
             return response()->json([
-                'message' => 'Email atau password salah'
+                'message' => 'Email atau password salah',
             ], 401);
         }
 
@@ -45,6 +44,7 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect()->route('login');
     }
 }
