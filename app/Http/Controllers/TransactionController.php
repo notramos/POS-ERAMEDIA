@@ -23,9 +23,16 @@ class TransactionController extends Controller
         return $this->transactionService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $units = Unit::all();
+
+        if ($request->ajax() || $request->has('all')) {
+            $products = Product::paginate(5);
+
+            return view('kasir.create', compact('products', 'units'))->render();
+        }
+
         $products = Product::paginate(5);
 
         return view('kasir.create', compact('products', 'units'));

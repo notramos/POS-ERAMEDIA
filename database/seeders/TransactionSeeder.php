@@ -12,7 +12,7 @@ class TransactionSeeder extends Seeder
         $transactions = [];
         $paymentMethods = ['tunai', 'qris'];
 
-        for ($i = 0; $i < 15; $i++) {
+        for ($i = 0; $i < 35; $i++) {
             $totalPrice = rand(10000, 150000);
             $discount = rand(0, 1) ? rand(500, 2000) : 0;
             $paidAmount = $totalPrice - $discount + rand(0, 10000);
@@ -25,8 +25,8 @@ class TransactionSeeder extends Seeder
                 'paid_amount' => $paidAmount,
                 'change_amount' => $changeAmount,
                 'payment_method' => $paymentMethod,
-                'created_at' => now()->subDays(rand(0, 10))->subMinutes(rand(0, 1439)),
-                'updated_at' => now()->subDays(rand(0, 10))->subMinutes(rand(0, 1439)),
+                'created_at' => now()->subDays(rand(0, 60))->subMinutes(rand(0, 1439)),
+                'updated_at' => now()->subDays(rand(0, 60))->subMinutes(rand(0, 1439)),
             ];
         }
 

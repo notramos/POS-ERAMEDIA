@@ -104,6 +104,9 @@
                         @endforelse
                     </tbody>
                 </table>
+                <div class="d-flex justify-content-center mt-3">
+                    {{ $suppliers->appends(request()->query())->links('public.pagination.sb-admin-2') }}
+                </div>
             </div>
         </div>
     </div>

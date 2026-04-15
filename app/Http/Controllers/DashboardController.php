@@ -33,16 +33,24 @@ class DashboardController extends Controller
         $tahunDipilih = $request->get('tahun_produk', date('Y'));
         $tahunList = range(date('Y'), date('Y') - 5);
         $productChart = $this->dashboardService->getProductChart((int) $tahunDipilih);
+
+        $topProducts = $this->dashboardService->getTopProducts(10);
+        $monthlyTrend = $this->dashboardService->getMonthlySalesTrend(2);
+
         Log::info('Dashboard data', [
             'summary' => $summary,
             'salesChart' => $salesChart,
             'productChart' => $productChart,
+            'topProducts' => $topProducts,
+            'monthlyTrend' => $monthlyTrend,
         ]);
 
         return view('dashboard.dashboard', array_merge(
             $summary,
             $salesChart,
             $productChart,
+            $topProducts,
+            $monthlyTrend,
             [
                 'start' => $filters['start'],
                 'end' => $filters['end'],

@@ -121,8 +121,8 @@
 
                 <!-- Pagination -->
                 @if($purchases->hasPages())
-                <div class="d-flex justify-content-end mt-3">
-                    {{ $purchases->appends(request()->query())->links() }}
+                <div class="d-flex justify-content-center mt-3">
+                    {{ $purchases->appends(request()->query())->links('public.pagination.sb-admin-2') }}
                 </div>
                 @endif
             </div>

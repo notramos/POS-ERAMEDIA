@@ -6,28 +6,37 @@ use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model
 {
-  protected $fillable = [
-    'name',
-    'price',
-    'stock',
-    'supplier_id',
-    'unit_id',
-    'detail',
-  ];
+    protected $fillable = [
+        'name',
+        'price',
+        'stock',
+        'supplier_id',
+        'unit_id',
+        'detail',
+    ];
 
+    public function getFormattedPriceAttribute()
+    {
+        return 'Rp '.number_format($this->price, 0, ',', '.');
+    }
 
-  public function getFormattedPriceAttribute()
-  {
-    return 'Rp ' . number_format($this->price, 0, ',', '.');
-  }
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
+    }
 
-  public function unit()
-  {
-    return $this->belongsTo(Unit::class);
-  }
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class);
+    }
 
-  public function supplier()
-  {
-    return $this->belongsTo(Supplier::class);
-  }
+    public function isLowStock(): bool
+    {
+        return $this->stock < 10;
+    }
+
+    public function isOutOfStock(): bool
+    {
+        return $this->stock <= 0;
+    }
 }

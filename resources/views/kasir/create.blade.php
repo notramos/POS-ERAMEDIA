@@ -94,6 +94,39 @@
         color: var(--gray-500);
     }
 
+    .product-number {
+        display: inline-block;
+        background: var(--gray-200);
+        color: var(--gray-600);
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 2px 6px;
+        border-radius: 4px;
+        margin-right: 8px;
+        min-width: 24px;
+        text-align: center;
+    }
+
+    .product-row.selected .product-number {
+        background: var(--primary);
+        color: white;
+    }
+
+    .product-row:hover {
+        background: var(--gray-100);
+    }
+
+    .product-row.selected {
+        background: rgba(99, 102, 241, 0.1);
+    }
+
+    .shortcut-hint {
+        font-size: 0.65rem;
+        color: var(--gray-500);
+        display: block;
+        margin-top: 2px;
+    }
+
     .stock-badge {
         padding: 4px 10px;
         border-radius: 6px;
@@ -104,6 +137,11 @@
     .stock-badge.available {
         background: #d1fae5;
         color: #059669;
+    }
+
+    .stock-badge.low-stock {
+        background: #fef3c7;
+        color: #d97706;
     }
 
     .stock-badge.out {
@@ -120,8 +158,6 @@
     .qty-add {
         width: 50px;
         text-align: center;
-        border: 1px solid var(--gray-200);
-        border-radius: 6px;
         padding: 6px;
         font-size: 0.8rem;
     }
@@ -483,39 +519,39 @@
                                 </tr>
                             </thead>
                             <tbody id="productTableBody">
-                                @foreach($products as $product)
+                                @foreach($products as $index => $product)
                                     <tr 
+                                        data-index="{{ $index }}"
                                         data-id="{{ $product->id }}"
                                         data-name="{{ $product->name }}"
                                         data-price="{{ $product->price }}"
                                         data-stock="{{ $product->stock }}"
                                         data-unit="{{ optional($product->unit)->name ?? 'pcs' }}"
-                                        @if($product->stock <= 0) class="out-of-stock-row" @endif
+                                        class="product-row {{ $product->stock <= 0 ? 'out-of-stock-row' : '' }}"
                                     >
                                         <td>
+                                            <span class="product-number">{{ $index + 1 }}</span>
                                             <div class="product-name">{{ $product->name }}</div>
                                             <small class="product-unit">{{ optional($product->unit)->name ?? 'pcs' }}</small>
                                         </td>
                                         <td>
-                                            @if($product->stock > 0)
-                                                <span class="stock-badge available">{{ $product->stock }}</span>
-                                            @else
+                                            @if($product->stock <= 0)
                                                 <span class="stock-badge out">Habis</span>
+                                            @elseif($product->stock < 10)
+                                                <span class="stock-badge low-stock">
+                                                    <i class="fas fa-exclamation-triangle me-1"></i>Low: {{ $product->stock }}
+                                                </span>
+                                            @else
+                                                <span class="stock-badge available">{{ $product->stock }}</span>
                                             @endif
                                         </td>
                                         <td class="price-text">Rp {{ number_format($product->price, 0, ',', '.') }}</td>
                                         <td>
                                             @if($product->stock > 0)
-                                                <div class="d-flex gap-1 align-items-center">
-                                                    <input 
-                                                        type="number" 
-                                                        class="qty-add" 
-                                                        value="1" 
-                                                        min="1" 
-                                                        max="{{ $product->stock }}" 
-                                                    >
-                                                    <button type="button" class="btn btn-add-product">
-                                                        <i class="fas fa-plus" style="color: white; font-size: 10px;"></i>
+                                                <div class="input-group input-group-sm" style="width: 100px;">
+                                                    <input type="number" class="form-control text-center" style="width: 45px;" value="1" min="1" max="{{ $product->stock }}">
+                                                    <button type="button" class="btn btn-success btn-sm">
+                                                        <i class="fas fa-plus"></i>
                                                     </button>
                                                 </div>
                                             @else
@@ -527,8 +563,15 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="p-3 border-top">
-                        {{ $products->appends(request()->query())->links('public.pagination.sb-admin-2') }}
+                    <div class="p-3 border-top text-center" id="loadMoreContainer">
+                        @if($products->hasMorePages())
+                            <button type="button" id="loadMoreBtn" class="btn btn-outline-primary">
+                                <i class="fas fa-plus me-1"></i> Muat Lebih Banyak
+                            </button>
+                        @endif
+                        <div id="loadingMore" style="display:none;">
+                            <span class="spinner-border spinner-border-sm me-2"></span> Memuat...
+                        </div>
                     </div>
                 </div>
             </div>
@@ -648,39 +691,56 @@
             btn.parentNode.replaceChild(newBtn, btn);
 
             newBtn.addEventListener('click', function () {
-                const row = this.closest('tr');
-                const qtyInput = row.querySelector('.qty-add');
-                const quantity = parseInt(qtyInput.value) || 1;
-                if (quantity <= 0) return;
-
-                const product = {
-                    id: parseInt(row.dataset.id),
-                    name: row.dataset.name,
-                    price: parseFloat(row.dataset.price),
-                    stock: parseInt(row.dataset.stock)
-                };
-
-                if (quantity > product.stock) {
-                    alert(`Stok tidak mencukupi! Tersedia: ${product.stock}`);
-                    qtyInput.value = product.stock;
-                    return;
-                }
-
-                const existing = cart.find(item => item.id === product.id);
-                if (existing) {
-                    existing.quantity += quantity;
-                    if (existing.quantity > product.stock) {
-                        existing.quantity = product.stock;
-                        alert(`Stok maksimal: ${product.stock}`);
-                    }
-                } else {
-                    cart.push({ ...product, quantity });
-                }
-
-                renderCart();
-                qtyInput.value = 1;
+                addProductFromRow(this.closest('tr'));
             });
         });
+
+        document.querySelectorAll('.input-group').forEach(stepper => {
+            const newStepper = stepper.cloneNode(true);
+            stepper.parentNode.replaceChild(newStepper, stepper);
+
+            newStepper.querySelectorAll('.btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    addProductFromRow(this.closest('tr'));
+                });
+            });
+        });
+    }
+
+    function addProductFromRow(row) {
+        const qtyInput = row.querySelector('.form-control');
+        const quantity = parseInt(qtyInput.value) || 1;
+        if (quantity <= 0) return;
+
+        const product = {
+            id: parseInt(row.dataset.id),
+            name: row.dataset.name,
+            price: parseFloat(row.dataset.price),
+            stock: parseInt(row.dataset.stock)
+        };
+
+        if (quantity > product.stock) {
+            createToast('error', `Stok tidak mencukupi! Tersedia: ${product.stock}`);
+            qtyInput.value = product.stock;
+            return;
+        }
+
+        const existing = cart.find(item => item.id === product.id);
+        if (existing) {
+            existing.quantity += quantity;
+            if (existing.quantity > product.stock) {
+                existing.quantity = product.stock;
+                createToast('error', `Stok maksimal: ${product.stock}`);
+            } else {
+                createToast('success', `+${quantity} ${product.name}`);
+            }
+        } else {
+            cart.push({ ...product, quantity });
+            createToast('success', `+${quantity} ${product.name}`);
+        }
+
+        renderCart();
+        qtyInput.value = 1;
     }
 
     function renderCart() {
@@ -780,8 +840,11 @@
     document.getElementById('cartItems').addEventListener('click', function (e) {
         if (e.target.classList.contains('btn-remove')) {
             const index = e.target.dataset.index;
-            cart.splice(index, 1);
-            renderCart();
+            const itemName = cart[index]?.name || 'item ini';
+            if (confirm(`Hapus "${itemName}" dari keranjang?`)) {
+                cart.splice(index, 1);
+                renderCart();
+            }
         }
     });
 
@@ -791,11 +854,36 @@
     const searchInput = document.getElementById('productSearch');
     const resetBtn = document.getElementById('resetSearch');
 
+    function loadAllProducts() {
+        const tbody = document.getElementById('productTableBody');
+        tbody.innerHTML = '<tr><td colspan="5" class="search-loading">Memuat semua produk...</td></tr>';
+        
+        fetch("{{ route('kasir.index') }}?all=1")
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newTableBody = doc.getElementById('productTableBody');
+                if (newTableBody) {
+                    tbody.innerHTML = newTableBody.innerHTML;
+                    attachAddItemListeners();
+                }
+            })
+            .catch(err => {
+                console.error('Error loading products:', err);
+                window.location.href = "{{ route('kasir.index') }}";
+            });
+    }
+
     let searchTimeout;
     searchInput.addEventListener('input', function () {
         const term = this.value.trim();
         if (term.length < 2) {
-            if (isSearching) window.location.reload();
+            if (isSearching) {
+                isSearching = false;
+                resetBtn.style.display = 'none';
+                loadAllProducts();
+            }
             return;
         }
 
@@ -820,7 +908,57 @@
         }, 300);
     });
 
-    resetBtn?.addEventListener('click', () => window.location.reload());
+    resetBtn?.addEventListener('click', function() {
+        searchInput.value = '';
+        isSearching = false;
+        resetBtn.style.display = 'none';
+        loadAllProducts();
+    });
+
+    let currentPage = 1;
+    let isLoadingMore = false;
+
+    document.getElementById('loadMoreBtn')?.addEventListener('click', function() {
+        if (isLoadingMore) return;
+        
+        isLoadingMore = true;
+        currentPage++;
+        
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        const loadingMore = document.getElementById('loadingMore');
+        
+        loadMoreBtn.style.display = 'none';
+        loadingMore.style.display = 'block';
+        
+        fetch("{{ route('kasir.index') }}?page=" + currentPage + "&ajax=1")
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newTbody = doc.getElementById('productTableBody');
+                const newLoadMore = doc.getElementById('loadMoreContainer');
+                
+                if (newTbody) {
+                    document.getElementById('productTableBody').insertAdjacentHTML('beforeend', newTbody.innerHTML);
+                    attachAddItemListeners();
+                }
+                
+                if (!newLoadMore?.querySelector('#loadMoreBtn')) {
+                    document.getElementById('loadMoreContainer').innerHTML = '<p class="text-muted">Semua produk sudah dimuat</p>';
+                }
+                
+                isLoadingMore = false;
+                loadingMore.style.display = 'none';
+            })
+            .catch(err => {
+                console.error('Error loading more:', err);
+                currentPage--;
+                loadMoreBtn.style.display = 'inline-block';
+                loadingMore.style.display = 'none';
+                isLoadingMore = false;
+                createToast('error', 'Gagal memuat produk lainnya');
+            });
+    });
 
     document.getElementById('transactionForm').addEventListener('submit', async function (e) {
         e.preventDefault();
@@ -983,8 +1121,49 @@
         });
 
         document.addEventListener('keydown', function(e) {
+            // Skip jika user sedang di input field (kecuali untuk Escape)
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                return;
+            }
+            
+            // Escape to close QRIS modal
             if (e.key === 'Escape' && document.getElementById('qrisModal').style.display === 'block') {
                 closeQrisModal();
+            }
+            
+            // Quick add: angka 1-9 pada tabel produk
+            if (!e.target.closest('#productTableBody') && !e.target.closest('#cartItems')) {
+                const key = parseInt(e.key);
+                if (key >= 1 && key <= 9) {
+                    e.preventDefault();
+                    const rows = document.querySelectorAll('#productTableBody tr.product-row');
+                    if (rows[key - 1]) {
+                        const row = rows[key - 1];
+                        if (row.classList.contains('out-of-stock-row')) {
+                            createToast('error', 'Produk stoknya habis!');
+                            return;
+                        }
+                        const product = {
+                            id: parseInt(row.dataset.id),
+                            name: row.dataset.name,
+                            price: parseFloat(row.dataset.price),
+                            stock: parseInt(row.dataset.stock)
+                        };
+                        const quantity = 1;
+                        const existing = cart.find(item => item.id === product.id);
+                        if (existing) {
+                            if (existing.quantity < product.stock) {
+                                existing.quantity += quantity;
+                            } else {
+                                createToast('error', 'Stok maksimal tercapai!');
+                            }
+                        } else {
+                            cart.push({ ...product, quantity });
+                        }
+                        renderCart();
+                        createToast('success', `+1 ${product.name}`);
+                    }
+                }
             }
         });
     });

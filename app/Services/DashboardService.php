@@ -107,4 +107,48 @@ class DashboardService implements DashboardServiceInterface
             'data_produk' => $dataProduk,
         ];
     }
+
+    public function getTopProducts(int $limit = 10): array
+    {
+        $topProducts = DB::table('transaction_details')
+            ->join('transactions', 'transaction_details.transaction_id', '=', 'transactions.id')
+            ->join('products', 'transaction_details.product_id', '=', 'products.id')
+            ->selectRaw('products.id, products.name, SUM(transaction_details.quantity) as total_terjual, SUM(transaction_details.subtotal) as total_pendapatan')
+            ->groupBy('products.id', 'products.name')
+            ->orderByDesc('total_terjual')
+            ->limit($limit)
+            ->get();
+
+        return [
+            'products' => $topProducts->pluck('name')->toArray(),
+            'quantities' => $topProducts->pluck('total_terjual')->toArray(),
+            'revenues' => $topProducts->pluck('total_pendapatan')->toArray(),
+        ];
+    }
+
+    public function getMonthlySalesTrend(int $months = 2): array
+    {
+        $startDate = Carbon::now()->subMonths($months - 1)->startOfMonth();
+
+        $data = Transaction::selectRaw("strftime('%Y-%m', created_at) as month, SUM(total_price) as total")
+            ->where('created_at', '>=', $startDate)
+            ->groupBy('month')
+            ->pluck('total', 'month')
+            ->toArray();
+
+        $labels = [];
+        $dataTrend = [];
+
+        for ($i = 0; $i < $months; $i++) {
+            $date = Carbon::now()->subMonths($months - 1 - $i);
+            $monthKey = $date->format('Y-m');
+            $labels[] = $date->format('M Y');
+            $dataTrend[] = (float) ($data[$monthKey] ?? 0);
+        }
+
+        return [
+            'labels' => $labels,
+            'data' => $dataTrend,
+        ];
+    }
 }

@@ -64,7 +64,7 @@
                     </tbody>
                 </table>
                 <div class="d-flex justify-content-center mt-3">
-                    {{ $products->appends(request()->query())->links() }}
+                    {{ $products->appends(request()->query())->links('public.pagination.sb-admin-2') }}
                 </div>
             </div>
         </div>

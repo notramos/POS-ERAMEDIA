@@ -160,6 +160,41 @@
         </div>
     </div>
 
+    <!-- Grafik 3: Top Products & Monthly Trend -->
+    <div class="row">
+        <!-- Top Products Bar Chart -->
+        <div class="col-xl-6 col-lg-12 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-success">
+                        <i class="fas fa-trophy me-1"></i> Top 10 Produk Terlaris
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-bar" style="height: 300px;">
+                        <canvas id="topProductsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Sales Trend -->
+        <div class="col-xl-6 col-lg-12 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">
+                        <i class="fas fa-chart-line me-1"></i> Tren Penjualan (2 Bulan Terakhir)
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area" style="height: 300px;">
+                        <canvas id="monthlyTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('scripts')
@@ -244,6 +279,109 @@
                     }
                 },
             plugins: { legend: { display: false } }
+        }
+    });
+
+    // Grafik 3: Top 10 Products
+    const ctx3 = document.getElementById('topProductsChart').getContext('2d');
+    new Chart(ctx3, {
+        type: 'bar',
+        data: {
+            labels: @json($products),
+            datasets: [{
+                label: 'Jumlah Terjual',
+                data: @json($quantities),
+                backgroundColor: [
+                    'rgba(78, 115, 223, 0.8)',
+                    'rgba(78, 115, 223, 0.7)',
+                    'rgba(78, 115, 223, 0.6)',
+                    'rgba(78, 115, 223, 0.5)',
+                    'rgba(78, 115, 223, 0.4)',
+                    'rgba(78, 115, 223, 0.3)',
+                    'rgba(78, 115, 223, 0.25)',
+                    'rgba(78, 115, 223, 0.2)',
+                    'rgba(78, 115, 223, 0.15)',
+                    'rgba(78, 115, 223, 0.1)'
+                ],
+                borderColor: '#4e73df',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#1e293b',
+                    titleFont: { size: 13, weight: '600' },
+                    bodyFont: { size: 12 },
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            const idx = context.dataIndex;
+                            const revenue = @json($revenues);
+                            return 'Terjual: ' + context.raw + ' | Pendapatan: Rp ' + parseInt(revenue[idx]).toLocaleString('id-ID');
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { beginAtZero: true, ticks: { precision: 0 } },
+                y: { ticks: { font: { size: 11 } } }
+            }
+        }
+    });
+
+    // Grafik 4: Monthly Sales Trend
+    const ctx4 = document.getElementById('monthlyTrendChart').getContext('2d');
+    new Chart(ctx4, {
+        type: 'line',
+        data: {
+            labels: @json($labels),
+            datasets: [{
+                label: 'Total Penjualan (Rp)',
+                data: @json($data),
+                borderColor: '#36a2eb',
+                backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#36a2eb',
+                pointRadius: 6,
+                pointHoverRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#1e293b',
+                    titleFont: { size: 13, weight: '600' },
+                    bodyFont: { size: 12 },
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            return 'Rp ' + context.raw.toLocaleString('id-ID');
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'Rp ' + value.toLocaleString('id-ID');
+                        }
+                    }
+                }
+            }
         }
     });
 </script>
