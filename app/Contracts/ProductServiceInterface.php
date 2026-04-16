@@ -13,4 +13,6 @@ interface ProductServiceInterface
     public function delete($id);
 
     public function getSupplierItems(int $supplierId);
+
+    public function checkExistence(int $supplierId, string $itemName): bool;
 }

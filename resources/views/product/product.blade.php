@@ -103,7 +103,11 @@
                             <select name="item_name" id="supplierItemSelect" class="form-control" required disabled>
                                 <option value="">– Pilih Supplier –</option>
                             </select>
-                            <small>Stok: <span id="availableStock">–</span> | Harga Beli: <span id="purchasePrice">–</span></small>
+                            <small class="d-block mt-1">
+                                <span class="text-muted">Stok Supplier: <span id="availableStock">–</span></span>
+                                <span class="text-muted"> | Harga Beli: <span id="purchasePrice">–</span></span>
+                            </small>
+                            <small id="productExistsInfo" class="d-block mt-1"></small>
                         </div>
                         <input type="hidden" name="supplier_id" id="selectedSupplierId">
                     </div>
@@ -116,11 +120,11 @@
                     @if($errors->has('stock'))
                         <div class="alert alert-danger mt-2">{{ $errors->first('stock') }}</div>
                     @endif
-                    <div class="form-group">
+                    <div class="form-group" id="priceField">
                         <label>Harga Jual (Rp) <span class="text-danger">*</span></label>
-                        <input type="number" name="price" id="productPrice" class="form-control" min="0" required>
+                        <input type="number" name="price" id="productPrice" class="form-control" min="0">
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" id="detailField">
                         <label>Detail</label>
                         <textarea name="detail" id="productDetail" class="form-control" rows="2"></textarea>
                     </div>
@@ -136,6 +140,7 @@
 
 @push('scripts')
 <script>
+console.log('Product blade loaded');
 $(document).ready(function() {
     // Event delegation untuk tombol edit
     $(document).on('click', '.btn-edit-product', function() {
@@ -164,25 +169,33 @@ $(document).ready(function() {
         $('#purchasePrice').text('–');
     });
 
-    // Load barang saat pilih supplier
+// Load barang saat pilih supplier - LOAD DATA tapi tidak auto-select
     $('#productSupplier').change(function() {
         const supplierId = $(this).val();
         $('#selectedSupplierId').val(supplierId);
         const select = $('#supplierItemSelect');
+        
+        if (!supplierId) {
+            select.empty().append('<option value="">-- Pilih Supplier --</option>').prop('disabled', true);
+            $('#availableStock').text('–');
+            $('#purchasePrice').text('–');
+            $('#productExistsInfo').text('');
+            $('#priceField').show();
+            $('#detailField').show();
+            return;
+        }
+        
         select.empty().append('<option value="">Memuat...</option>').prop('disabled', true);
         $('#availableStock').text('–');
         $('#purchasePrice').text('–');
-
-        if (!supplierId) {
-            select.empty().append('<option value="">– Pilih Supplier –</option>');
-            return;
-        }
-
+        
         $.get(`/products/supplier-items/${supplierId}`, function(data) {
             select.empty();
             if (data.length === 0) {
                 select.append('<option value="">Tidak ada barang</option>');
             } else {
+                // Placeholder - user harus pilih salah satu
+                select.append('<option value="">-- Pilih Barang --</option>');
                 data.forEach(item => {
                     select.append(`
                         <option value="${item.name}" 
@@ -195,15 +208,55 @@ $(document).ready(function() {
             }
             select.prop('disabled', data.length === 0);
         });
+        
+        $('#productExistsInfo').text('');
+        $('#priceField').show();
+        $('#detailField').show();
     });
 
-    // Update info saat pilih barang
-    $('#supplierItemSelect').change(function() {
-        const option = $(this).find(':selected');
-        const stock = option.data('stock');
-        const price = option.data('price');
-        $('#availableStock').text(stock ? stock : '0');
-        $('#purchasePrice').text(price ? `Rp ${Number(price).toLocaleString('id-ID')}` : '–');
+    
+    document.getElementById('supplierItemSelect').addEventListener('change', function(e) {
+        
+        const option = e.target.selectedOptions[0];
+        
+        // Skip if placeholder (empty value)
+        if (!option || !option.value) {
+            return;
+        }
+        
+        
+        const stock = option.dataset.stock;
+        const price = option.dataset.price;
+        const supplierId = document.getElementById('selectedSupplierId').value;
+        const itemName = option.value;
+        
+        
+        
+        document.getElementById('availableStock').textContent = stock || '0';
+        document.getElementById('purchasePrice').textContent = price ? `Rp ${Number(price).toLocaleString('id-ID')}` : '–';
+        
+        if (!supplierId || !itemName) return;
+        
+        fetch(`/products/check-existence?supplier_id=${supplierId}&item_name=${encodeURIComponent(itemName)}`)
+            .then(res => res.json())
+            .then(res => {
+               
+                const infoEl = document.getElementById('productExistsInfo');
+                const priceField = document.getElementById('priceField');
+                const detailField = document.getElementById('detailField');
+                
+                if (res.exists) {
+                    infoEl.textContent = '⚠️ Produk sudah ada, stok akan ditambahkan';
+                    infoEl.className = 'd-block mt-1 text-warning';
+                    priceField.style.display = 'none';
+                    detailField.style.display = 'none';
+                } else {
+                    infoEl.textContent = '✅ Produk baru akan dibuat';
+                    infoEl.className = 'd-block mt-1 text-success';
+                    priceField.style.display = 'block';
+                    detailField.style.display = 'block';
+                }
+            });
     });
 
     // 🔥 SOLUSI UTAMA: Force close modal tanpa validasi

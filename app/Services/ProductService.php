@@ -36,18 +36,33 @@ class ProductService implements ProductServiceInterface
 
             $supplierItem->decrement('stok', $data['stock']);
 
-            $product = Product::create([
-                'name' => $supplierItem->name,
-                'price' => $data['price'],
-                'stock' => $data['stock'],
-                'supplier_id' => $supplierItem->supplier_id,
-                'unit_id' => $supplierItem->unit_id,
-                'detail' => $data['detail'] ?? null,
-            ]);
+            $product = Product::where('supplier_id', $data['supplier_id'])
+                ->where('name', $supplierItem->name)
+                ->first();
+
+            if ($product) {
+                $product->increment('stock', $data['stock']);
+                if (! empty($data['price'])) {
+                    $product->update([
+                        'price' => $data['price'],
+                        'detail' => $data['detail'] ?? $product->detail,
+                    ]);
+                }
+            } else {
+                Product::create([
+                    'name' => $supplierItem->name,
+                    'price' => $data['price'],
+                    'stock' => $data['stock'],
+                    'supplier_id' => $supplierItem->supplier_id,
+                    'unit_id' => $supplierItem->unit_id,
+                    'detail' => $data['detail'] ?? '',
+                ]);
+            }
 
             DB::commit();
 
-            return $product;
+            return $product ?? Product::where('supplier_id', $data['supplier_id'])
+                ->where('name', $supplierItem->name)->first();
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Product creation failed: '.$e->getMessage());
@@ -141,5 +156,12 @@ class ProductService implements ProductServiceInterface
                 'unit_id' => $item->unit_id,
                 'unit_name' => $item->unit?->name,
             ]);
+    }
+
+    public function checkExistence(int $supplierId, string $itemName): bool
+    {
+        return Product::where('supplier_id', $supplierId)
+            ->where('name', $itemName)
+            ->exists();
     }
 }

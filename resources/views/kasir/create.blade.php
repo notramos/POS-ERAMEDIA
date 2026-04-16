@@ -1032,6 +1032,9 @@
 
             if (result.success) {
                 showModal(result.html);
+                if (result.updated_products) {
+                    updateProductStock(result.updated_products);
+                }
                 cart = [];
                 renderCart();
                 document.getElementById('discount_percent_display').value = '';
@@ -1086,6 +1089,33 @@
     function closeModal() {
         const modal = document.getElementById('receiptModal');
         if (modal) modal.remove();
+    }
+
+    function updateProductStock(updatedProducts) {
+        updatedProducts.forEach(product => {
+            const row = document.querySelector(`#productTableBody tr[data-id="${product.id}"]`);
+            if (!row) return;
+
+            row.dataset.stock = product.stock;
+
+            const stockCell = row.querySelector('td:nth-child(2)');
+            let badgeHtml = '';
+
+            if (product.stock <= 0) {
+                badgeHtml = '<span class="stock-badge out">Habis</span>';
+                row.classList.add('out-of-stock-row');
+                const inputGroup = row.querySelector('.input-group');
+                if (inputGroup) inputGroup.innerHTML = '<span class="text-danger fw-bold">-</span>';
+            } else if (product.stock < 10) {
+                badgeHtml = `<span class="stock-badge low-stock"><i class="fas fa-exclamation-triangle me-1"></i>Low: ${product.stock}</span>`;
+                row.classList.remove('out-of-stock-row');
+            } else {
+                badgeHtml = `<span class="stock-badge available">${product.stock}</span>`;
+                row.classList.remove('out-of-stock-row');
+            }
+
+            stockCell.innerHTML = badgeHtml;
+        });
     }
 
     function loadPrintPreview(transactionId) {

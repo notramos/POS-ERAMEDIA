@@ -81,9 +81,19 @@ class TransactionController extends Controller
                 ]),
             ];
 
+            $updatedProducts = collect($validated['items'])->map(function ($item) {
+                $product = Product::find($item['product_id']);
+
+                return [
+                    'id' => $product->id,
+                    'stock' => $product->stock,
+                ];
+            });
+
             return response()->json([
                 'success' => true,
                 'html' => view('kasir.modal.modalDetail', ['transaction' => (object) $transactionData])->render(),
+                'updated_products' => $updatedProducts,
             ]);
         } catch (\Exception $e) {
             return response()->json([

@@ -35,7 +35,7 @@ class ProductController extends Controller
             $validated = $request->validate([
                 'supplier_id' => 'required|exists:suppliers,id',
                 'item_name' => 'required|string',
-                'price' => 'required|numeric|min:0',
+                'price' => 'nullable|numeric|min:0',
                 'stock' => 'required|integer|min:1',
                 'detail' => 'nullable|string',
             ]);
@@ -85,5 +85,15 @@ class ProductController extends Controller
         $items = $this->productService->getSupplierItems($supplierId);
 
         return response()->json($items);
+    }
+
+    public function checkExistence(Request $request)
+    {
+        $exists = $this->productService->checkExistence(
+            $request->supplier_id,
+            $request->item_name
+        );
+
+        return response()->json(['exists' => $exists]);
     }
 }

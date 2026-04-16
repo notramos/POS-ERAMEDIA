@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Contracts\ProductServiceInterface;
 use App\Contracts\PurchaseServiceInterface;
+use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\Supplier;
 use App\Models\SupplierItem;
@@ -11,6 +13,13 @@ use Illuminate\Support\Facades\Log;
 
 class PurchaseService implements PurchaseServiceInterface
 {
+    protected ProductServiceInterface $productService;
+
+    public function __construct(ProductServiceInterface $productService)
+    {
+        $this->productService = $productService;
+    }
+
     public function getAll(array $filters)
     {
         $query = Purchase::with('supplier')->orderBy('purchase_date', 'desc');
@@ -53,6 +62,25 @@ class PurchaseService implements PurchaseServiceInterface
 
                     $supplierItem->increment('stok', $quantity);
 
+                    // $product = Product::where('supplier_id', $supplierId)
+                    //     ->where('name', $supplierItem->name)
+                    //     ->first();
+
+                    // if ($product) {
+                    //     $product->increment('stock', $quantity);
+                    // } else {
+                    //     Product::create([
+                    //         'name' => $supplierItem->name,
+                    //         'price' => $supplierItem->price,
+                    //         'stock' => $quantity,
+                    //         'supplier_id' => $supplierId,
+                    //         'unit_id' => $supplierItem->unit_id,
+                    //         'detail' => '',
+                    //     ]);
+                    // }
+
+                    // $supplierItem->decrement('stok', $quantity);
+
                     $itemsToSave[] = [
                         'supplier_item_id' => $supplierItem->id,
                         'product_name' => $supplierItem->name,
@@ -64,7 +92,7 @@ class PurchaseService implements PurchaseServiceInterface
                 }
             }
 
-            foreach ($data['new_items'] ?? [] as $item) {
+            foreach ($data['new_items'] ?? [] as $index => $item) {
                 if (! empty($item['name']) && ! empty($item['price']) && ! empty($item['quantity'])) {
                     $supplierItem = SupplierItem::firstOrCreate(
                         ['supplier_id' => $supplierId, 'name' => trim($item['name'])],
@@ -78,6 +106,23 @@ class PurchaseService implements PurchaseServiceInterface
                     $quantity = (int) $item['quantity'];
                     if (! $supplierItem->wasRecentlyCreated) {
                         $supplierItem->increment('stok', $quantity);
+                    }
+
+                    $product = Product::where('supplier_id', $supplierId)
+                        ->where('name', trim($item['name']))
+                        ->first();
+
+                    if ($product) {
+                        $product->increment('stock', $quantity);
+                    } else {
+                        Product::create([
+                            'name' => trim($item['name']),
+                            'price' => $item['price'],
+                            'stock' => $quantity,
+                            'supplier_id' => $supplierId,
+                            'unit_id' => $item['unit_id'] ?? null,
+                            'detail' => '',
+                        ]);
                     }
 
                     $subtotal = $supplierItem->price * $quantity;

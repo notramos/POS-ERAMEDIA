@@ -4,10 +4,10 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RegisterController;
+use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\SupplierController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -48,6 +48,7 @@ Route::middleware(['role:admin'])->group(function () {
     Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
     Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
     Route::get('/products/supplier-items/{supplierId}', [ProductController::class, 'getSupplierItems']);
+    Route::get('/products/check-existence', [ProductController::class, 'checkExistence']);
 
     // Units / Categories
     Route::post('/kategories', [UnitController::class, 'tambah'])->name('unit.tambah');
