@@ -91,7 +91,7 @@
                     <div id="addSection">
                         <div class="form-group">
                             <label>Supplier <span class="text-danger">*</span></label>
-                            <select  id="productSupplier" class="form-control" >
+                            <select id="productSupplier" class="form-control">
                                 <option value="">– Pilih –</option>
                                 @foreach($suppliers as $s)
                                     <option value="{{ $s->id }}">{{ $s->name }}</option>
@@ -107,27 +107,24 @@
                                 <span class="text-muted">Stok Supplier: <span id="availableStock">–</span></span>
                                 <span class="text-muted"> | Harga Beli: <span id="purchasePrice">–</span></span>
                             </small>
-                            <small id="productExistsInfo" class="d-block mt-1"></small>
                         </div>
                         <input type="hidden" name="supplier_id" id="selectedSupplierId">
                     </div>
 
-                    <!-- Shared Fields -->
+                     <!-- Shared Fields -->
+                     <input type="hidden" name="stock" id="productStock" value="1">
+                     <div class="form-group">
+                        <label>Margin (Rp) <span class="text-danger">*</span></label>
+                        <input type="number" name="margin" id="productMargin" class="form-control" min="0" value="0">
+                    </div>
                     <div class="form-group">
-                        <label>Stok <span class="text-danger">*</span></label>
-                        <input type="number" name="stock" id="productStock" class="form-control" min="0" required>
+                        <label>Harga Jual (auto)</label>
+                        <div class="form-control" style="background-color: #e9ecef;" id="sellPriceDisplay">Rp 0</div>
                     </div>
-                    @if($errors->has('stock'))
-                        <div class="alert alert-danger mt-2">{{ $errors->first('stock') }}</div>
-                    @endif
-                    <div class="form-group" id="priceField">
-                        <label>Harga Jual (Rp) <span class="text-danger">*</span></label>
-                        <input type="number" name="price" id="productPrice" class="form-control" min="0">
-                    </div>
-                    <div class="form-group" id="detailField">
-                        <label>Detail</label>
-                        <textarea name="detail" id="productDetail" class="form-control" rows="2"></textarea>
-                    </div>
+                     <div class="form-group" id="detailField">
+                         <label>Detail</label>
+                         <textarea name="detail" id="productDetail" class="form-control" rows="2"></textarea>
+                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
@@ -142,6 +139,8 @@
 <script>
 console.log('Product blade loaded');
 $(document).ready(function() {
+    let purchasePrice = 0;
+
     // Event delegation untuk tombol edit
     $(document).on('click', '.btn-edit-product', function() {
         const btn = $(this);
@@ -152,24 +151,27 @@ $(document).ready(function() {
         $('#addSection').hide();
 
         $('#productStock').val(btn.data('stock') || 0);
-        $('#productPrice').val(btn.data('price') || 0);
         $('#productDetail').val(btn.data('detail') || '');
 
         $('#modalProduct').modal('show');
     });
 
-    // Reset form saat buka modal tambah
-    $('[data-target="#modalProduct"]').not('.btn-edit-product').on('click', function() {
-        $('#modalTitle').text('Tambah Produk');
-        $('#formMethod').val('POST');
-        $('#productForm').attr('action', "{{ route('products.store') }}");
-        $('#productForm')[0].reset();
-        $('#addSection').show();
-        $('#availableStock').text('–');
-        $('#purchasePrice').text('–');
-    });
+     // Reset form saat buka modal tambah
+     $('[data-target="#modalProduct"]').not('.btn-edit-product').on('click', function() {
+         $('#modalTitle').text('Tambah Produk');
+         $('#formMethod').val('POST');
+         $('#productForm').attr('action', "{{ route('products.store') }}");
+         $('#productForm')[0].reset();
+         $('#addSection').show();
+         $('#availableStock').text('–');
+         $('#purchasePrice').text('–');
+         $('#productMargin').val(0);
+         $('#productStock').val(1);
+         purchasePrice = 0;
+         updateSellPrice();
+     });
 
-// Load barang saat pilih supplier - LOAD DATA tapi tidak auto-select
+    // Load barang saat pilih supplier - LOAD DATA tapi tidak auto-select
     $('#productSupplier').change(function() {
         const supplierId = $(this).val();
         $('#selectedSupplierId').val(supplierId);
@@ -179,22 +181,23 @@ $(document).ready(function() {
             select.empty().append('<option value="">-- Pilih Supplier --</option>').prop('disabled', true);
             $('#availableStock').text('–');
             $('#purchasePrice').text('–');
-            $('#productExistsInfo').text('');
-            $('#priceField').show();
-            $('#detailField').show();
+            purchasePrice = 0;
+            updateSellPrice();
             return;
         }
         
         select.empty().append('<option value="">Memuat...</option>').prop('disabled', true);
         $('#availableStock').text('–');
         $('#purchasePrice').text('–');
+        purchasePrice = 0;
+        updateSellPrice();
         
-        $.get(`/products/supplier-items/${supplierId}`, function(data) {
+        // Use getAvailableSupplierItems - shows only items not in products
+        $.get(`/products/available-supplier-items/${supplierId}`, function(data) {
             select.empty();
             if (data.length === 0) {
                 select.append('<option value="">Tidak ada barang</option>');
             } else {
-                // Placeholder - user harus pilih salah satu
                 select.append('<option value="">-- Pilih Barang --</option>');
                 data.forEach(item => {
                     select.append(`
@@ -208,66 +211,44 @@ $(document).ready(function() {
             }
             select.prop('disabled', data.length === 0);
         });
-        
-        $('#productExistsInfo').text('');
-        $('#priceField').show();
-        $('#detailField').show();
     });
 
-    
-    document.getElementById('supplierItemSelect').addEventListener('change', function(e) {
-        
-        const option = e.target.selectedOptions[0];
-        
-        // Skip if placeholder (empty value)
-        if (!option || !option.value) {
-            return;
-        }
-        
-        
-        const stock = option.dataset.stock;
-        const price = option.dataset.price;
-        const supplierId = document.getElementById('selectedSupplierId').value;
-        const itemName = option.value;
-        
-        
-        
-        document.getElementById('availableStock').textContent = stock || '0';
-        document.getElementById('purchasePrice').textContent = price ? `Rp ${Number(price).toLocaleString('id-ID')}` : '–';
-        
-        if (!supplierId || !itemName) return;
-        
-        fetch(`/products/check-existence?supplier_id=${supplierId}&item_name=${encodeURIComponent(itemName)}`)
-            .then(res => res.json())
-            .then(res => {
-               
-                const infoEl = document.getElementById('productExistsInfo');
-                const priceField = document.getElementById('priceField');
-                const detailField = document.getElementById('detailField');
-                
-                if (res.exists) {
-                    infoEl.textContent = '⚠️ Produk sudah ada, stok akan ditambahkan';
-                    infoEl.className = 'd-block mt-1 text-warning';
-                    priceField.style.display = 'none';
-                    detailField.style.display = 'none';
-                } else {
-                    infoEl.textContent = '✅ Produk baru akan dibuat';
-                    infoEl.className = 'd-block mt-1 text-success';
-                    priceField.style.display = 'block';
-                    detailField.style.display = 'block';
-                }
-            });
-    });
+    // Update sell price calculation
+    function updateSellPrice() {
+        const margin = parseFloat($('#productMargin').val()) || 0;
+        const sellPrice = purchasePrice + margin;
+        $('#sellPriceDisplay').text('Rp ' + sellPrice.toLocaleString('id-ID'));
+    }
 
-    // 🔥 SOLUSI UTAMA: Force close modal tanpa validasi
+    $('#productMargin').on('input', updateSellPrice);
+
+     document.getElementById('supplierItemSelect').addEventListener('change', function(e) {
+         const option = e.target.selectedOptions[0];
+         
+         if (!option || !option.value) {
+             return;
+         }
+         
+         const stock = option.dataset.stock;
+         const price = parseFloat(option.dataset.price) || 0;
+         
+         purchasePrice = price;
+         document.getElementById('availableStock').textContent = stock || '0';
+         document.getElementById('purchasePrice').textContent = price ? `Rp ${price.toLocaleString('id-ID')}` : '–';
+         
+         // Auto-set stock to available supplier stock
+         document.getElementById('productStock').value = stock || 1;
+         
+         updateSellPrice();
+     });
+
+    // Force close modal tanpa validasi
     $(document).on('click', '[data-dismiss="modal"]', function(e) {
         const modal = $('#modalProduct');
         const form = modal.find('form')[0];
         
         if (form) {
-            // Nonaktifkan validasi native browser
             form.noValidate = true;
-            // Reset setelah ditutup
             modal.one('hidden.bs.modal', function() {
                 form.reset();
                 form.noValidate = false;
@@ -275,6 +256,9 @@ $(document).ready(function() {
                 $('#modalTitle').text('Tambah Produk');
                 $('#availableStock').text('–');
                 $('#purchasePrice').text('–');
+                $('#productStock').val(1);
+                purchasePrice = 0;
+                updateSellPrice();
             });
         }
         
@@ -285,7 +269,6 @@ $(document).ready(function() {
 
     // Jika ada error validasi, buka modal kembali dan tampilkan pesan
     @if($errors->any())
-        // Tampilkan notifikasi error pertama
         createToast('error', @json($errors->first()));
         (function() {
             const id = @json(old('id'));
@@ -302,15 +285,14 @@ $(document).ready(function() {
                 $('#addSection').show();
             }
 
-            $('#productStock').val(@json(old('stock')));
-            $('#productPrice').val(@json(old('price')));
+            $('#productStock').val(@json(old('stock', 1)));
+            $('#productMargin').val(@json(old('margin', 0)));
             $('#productDetail').val(@json(old('detail')));
             $('#modalProduct').modal('show');
         })();
     @endif
 
 });
-
 </script>
 @endpush
 @endsection

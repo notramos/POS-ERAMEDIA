@@ -48,6 +48,7 @@ Route::middleware(['role:admin'])->group(function () {
     Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
     Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
     Route::get('/products/supplier-items/{supplierId}', [ProductController::class, 'getSupplierItems']);
+    Route::get('/products/available-supplier-items/{supplierId}', [ProductController::class, 'getAvailableSupplierItems']);
     Route::get('/products/check-existence', [ProductController::class, 'checkExistence']);
 
     // Units / Categories

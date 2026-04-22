@@ -30,29 +30,34 @@ class ProductService implements ProductServiceInterface
                 ->where('name', $data['item_name'])
                 ->firstOrFail();
 
-            if ($supplierItem->stok < $data['stock']) {
+            $stock = (int) ($data['stock'] ?? 1);
+            $margin = (float) ($data['margin'] ?? 0);
+
+            if ($supplierItem->stok < $stock) {
                 throw new \Exception("Stok tidak mencukupi. Tersedia: {$supplierItem->stok}");
             }
 
-            $supplierItem->decrement('stok', $data['stock']);
+            $supplierItem->decrement('stok', $stock);
+
+            $sellPrice = $supplierItem->price + $margin;
 
             $product = Product::where('supplier_id', $data['supplier_id'])
                 ->where('name', $supplierItem->name)
                 ->first();
 
             if ($product) {
-                $product->increment('stock', $data['stock']);
-                if (! empty($data['price'])) {
+                $product->increment('stock', $stock);
+                if (! empty($margin)) {
                     $product->update([
-                        'price' => $data['price'],
+                        'price' => $sellPrice,
                         'detail' => $data['detail'] ?? $product->detail,
                     ]);
                 }
             } else {
                 Product::create([
                     'name' => $supplierItem->name,
-                    'price' => $data['price'],
-                    'stock' => $data['stock'],
+                    'price' => $sellPrice,
+                    'stock' => $stock,
                     'supplier_id' => $supplierItem->supplier_id,
                     'unit_id' => $supplierItem->unit_id,
                     'detail' => $data['detail'] ?? '',
@@ -163,5 +168,27 @@ class ProductService implements ProductServiceInterface
         return Product::where('supplier_id', $supplierId)
             ->where('name', $itemName)
             ->exists();
+    }
+
+    public function getAvailableSupplierItems(int $supplierId)
+    {
+        return SupplierItem::where('supplier_id', $supplierId)
+            ->where('stok', '>', 0)
+            ->whereNotExists(function ($query) use ($supplierId) {
+                $query->select(DB::raw(1))
+                    ->from('products')
+                    ->whereColumn('products.name', 'supplier_items.name')
+                    ->where('products.supplier_id', $supplierId);
+            })
+            ->with('unit')
+            ->get()
+            ->map(fn ($item) => [
+                'id' => $item->id,
+                'name' => $item->name,
+                'purchase_price' => $item->price,
+                'stock' => $item->stok,
+                'unit_id' => $item->unit_id,
+                'unit_name' => $item->unit?->name,
+            ]);
     }
 }

@@ -128,22 +128,99 @@ class DashboardService implements DashboardServiceInterface
 
     public function getMonthlySalesTrend(int $months = 2): array
     {
-        $startDate = Carbon::now()->subMonths($months - 1)->startOfMonth();
+        return $this->getMonthlySalesTrendFiltered(null, null, null, $months);
+    }
 
-        $data = Transaction::selectRaw("strftime('%Y-%m', created_at) as month, SUM(total_price) as total")
-            ->where('created_at', '>=', $startDate)
-            ->groupBy('month')
-            ->pluck('total', 'month')
+    public function getMonthlySalesTrendFiltered(?string $period, ?string $start, ?string $end, int $fallbackMonths = 2): array
+    {
+        $now = Carbon::now();
+        $query = Transaction::query();
+        $groupFormat = '%Y-%m';
+        $labelFormat = 'M Y';
+
+        // Period filter takes precedence
+        if ($period) {
+            switch ($period) {
+                case 'week':
+                    $startDate = $now->copy()->startOfWeek();
+                    $endDate = $now->copy()->endOfWeek();
+                    $groupFormat = '%Y-%m-%d';
+                    $labelFormat = 'd M';
+                    break;
+                case 'month':
+                    $startDate = $now->copy()->startOfMonth();
+                    $endDate = $now->copy()->endOfMonth();
+                    $groupFormat = '%Y-%m-%d';
+                    $labelFormat = 'd M';
+                    break;
+                case 'year':
+                    $startDate = $now->copy()->startOfYear();
+                    $endDate = $now->copy()->endOfYear();
+                    $groupFormat = '%Y-%m';
+                    $labelFormat = 'M Y';
+                    break;
+                default:
+                    $startDate = $now->copy()->subMonths($fallbackMonths - 1)->startOfMonth();
+                    $endDate = $now->copy()->endOfMonth();
+            }
+        } elseif ($start && $end) {
+            $startDate = Carbon::parse($start)->startOfDay();
+            $endDate = Carbon::parse($end)->endOfDay();
+
+            // Determine grouping based on range length
+            $diffDays = $startDate->diffInDays($endDate);
+            if ($diffDays <= 31) {
+                $groupFormat = '%Y-%m-%d';
+                $labelFormat = 'd M';
+            } elseif ($diffDays <= 365) {
+                $groupFormat = '%Y-%m';
+                $labelFormat = 'M Y';
+            } else {
+                $groupFormat = '%Y';
+                $labelFormat = 'Y';
+            }
+        } else {
+            // Default: last N months
+            $startDate = $now->copy()->subMonths($fallbackMonths - 1)->startOfMonth();
+            $endDate = $now->copy()->endOfMonth();
+        }
+
+        $data = $query->selectRaw("strftime('{$groupFormat}', created_at) as period, SUM(total_price) as total")
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->groupBy('period')
+            ->orderBy('period')
+            ->pluck('total', 'period')
             ->toArray();
 
+        // Generate labels and data based on grouping format
         $labels = [];
         $dataTrend = [];
 
-        for ($i = 0; $i < $months; $i++) {
-            $date = Carbon::now()->subMonths($months - 1 - $i);
-            $monthKey = $date->format('Y-m');
-            $labels[] = $date->format('M Y');
-            $dataTrend[] = (float) ($data[$monthKey] ?? 0);
+        if ($groupFormat === '%Y-%m-%d') {
+            // Daily: iterate each day in range
+            $periodObj = CarbonPeriod::create($startDate, $endDate);
+            foreach ($periodObj as $date) {
+                $key = $date->format('Y-m-d');
+                $labels[] = $date->format($labelFormat);
+                $dataTrend[] = (float) ($data[$key] ?? 0);
+            }
+        } elseif ($groupFormat === '%Y') {
+            // Yearly grouping
+            $startYear = (int) $startDate->format('Y');
+            $endYear = (int) $endDate->format('Y');
+            for ($y = $startYear; $y <= $endYear; $y++) {
+                $key = (string) $y;
+                $labels[] = $key;
+                $dataTrend[] = (float) ($data[$key] ?? 0);
+            }
+        } else {
+            // Monthly grouping (%Y-%m) - default for period=year and default/custom longer ranges
+            $periodObj = CarbonPeriod::create($startDate->startOfMonth(), '1 month', $endDate->startOfMonth());
+            foreach ($periodObj as $date) {
+                $key = $date->format('Y-m');
+                $labels[] = $date->format($labelFormat);
+                $dataTrend[] = (float) ($data[$key] ?? 0);
+            }
         }
 
         return [

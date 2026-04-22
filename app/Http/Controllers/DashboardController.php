@@ -35,7 +35,17 @@ class DashboardController extends Controller
         $productChart = $this->dashboardService->getProductChart((int) $tahunDipilih);
 
         $topProducts = $this->dashboardService->getTopProducts(10);
-        $monthlyTrend = $this->dashboardService->getMonthlySalesTrend(2);
+
+        // Trend filtering
+        $trendPeriod = $request->get('trend_period');
+        $trendStart = $request->get('trend_start');
+        $trendEnd = $request->get('trend_end');
+
+        $monthlyTrend = $this->dashboardService->getMonthlySalesTrendFiltered(
+            $trendPeriod,
+            $trendStart,
+            $trendEnd
+        );
 
         Log::info('Dashboard data', [
             'summary' => $summary,
@@ -45,7 +55,7 @@ class DashboardController extends Controller
             'monthlyTrend' => $monthlyTrend,
         ]);
 
-        return view('dashboard.dashboard', array_merge(
+        $data = array_merge(
             $summary,
             $salesChart,
             $productChart,
@@ -57,6 +67,8 @@ class DashboardController extends Controller
                 'tahun_dipilih' => $tahunDipilih,
                 'tahun_list' => $tahunList,
             ]
-        ));
+        );
+
+        return view('dashboard.dashboard', $data);
     }
 }

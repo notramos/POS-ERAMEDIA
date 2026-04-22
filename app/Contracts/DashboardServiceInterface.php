@@ -13,4 +13,6 @@ interface DashboardServiceInterface
     public function getTopProducts(int $limit = 10): array;
 
     public function getMonthlySalesTrend(int $months = 2): array;
+
+    public function getMonthlySalesTrendFiltered(?string $period, ?string $start, ?string $end): array;
 }

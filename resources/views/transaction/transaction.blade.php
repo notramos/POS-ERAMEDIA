@@ -87,16 +87,18 @@
                                 <a href="{{  route('transaction.receipt', $transaction->id) }}" class="btn btn-sm btn-info" target="_blank">
                                     <i class="fas fa-print"></i> Struk
                                 </a>
-                                <a href="#" class="btn btn-sm btn-warning" data-toggle="collapse" data-target="#details-{{ $transaction->id }}">
-                                    <i class="fas fa-eye"></i> Detail
-                                </a>
-                                <form action="{{ route('kasir.delete',$transaction->id) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Yakin hapus transaksi #{{ $transaction->id }}?')">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
+                                 <a href="#" class="btn btn-sm btn-warning" data-toggle="collapse" data-target="#details-{{ $transaction->id }}">
+                                     <i class="fas fa-eye"></i> Detail
+                                 </a>
+                                 @if(optional(auth()->user()->role)->name === 'admin')
+                                     <form action="{{ route('kasir.delete',$transaction->id) }}" method="POST" class="d-inline">
+                                         @csrf
+                                         @method('DELETE')
+                                         <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Yakin hapus transaksi #{{ $transaction->id }}?')">
+                                             <i class="fas fa-trash"></i>
+                                         </button>
+                                     </form>
+                                 @endif
                             </td>
                         </tr>
                         <tr>

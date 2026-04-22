@@ -14,14 +14,14 @@
                         <input type="date" name="start" id="start"
                             value="{{ request('start') }}"
                             class="form-control form-control-sm">
-            </div>
+                </div>
 
                     <div class="col-sm-4 col-md-3">
                         <label for="end" class="form-label text-xs text-gray-600">Sampai</label>
                         <input type="date" name="end" id="end"
                             value="{{ request('end') }}"
                             class="form-control form-control-sm">
-            </div>
+                </div>
 
                     <div class="col-sm-4 col-md-2">
                         <button type="submit" class="btn btn-primary btn-sm w-100">
@@ -34,14 +34,14 @@
                             <a href="{{ route('dashboard') }}"
                                 class="btn btn-outline-secondary btn-sm w-100">
                                 Reset Filter
-                    </a>
-                </div>
-            @endif
+                        </a>
+                    </div>
+                @endif
 
-        </form>
-            </div>
-    </div>
-
+                            </form>
+                        </div>
+                    </div>
+                    
 
     <!-- Cards -->
     <div class="row">
@@ -109,9 +109,9 @@
 
     <!-- DUA GRAFIK SAJA -->
     <div class="row">
-        <!-- Grafik 1: Penjualan vs Pembelian -->
-        <div class="col-xl-6 col-lg-12 mb-4">
-            <div class="card shadow">
+         <!-- Grafik 1: Penjualan vs Pembelian -->
+         <div class="col-xl-6 col-lg-12 mb-4">
+             <div class="card shadow">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">
                         Penjualan vs Pembelian
@@ -121,14 +121,14 @@
                             <small>(Semua Data)</small>
                 @endif
                     </h6>
-            </div>
-                <div class="card-body">
-                    <div class="chart-area" style="height: 300px;">
-                    <canvas id="salesPurchaseChart"></canvas>
-                    </div>
                 </div>
-            </div>
-        </div>
+                 <div class="card-body">
+                     <div class="chart-area" style="height: 300px;">
+                     <canvas id="salesPurchaseChart"></canvas>
+                     </div>
+                 </div>
+             </div>
+         </div>
 
         <!-- Grafik 2: Produk Terjual -->
         <div class="col-xl-6 col-lg-12 mb-4">
@@ -183,10 +183,51 @@
             <div class="card shadow">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-info">
-                        <i class="fas fa-chart-line me-1"></i> Tren Penjualan (2 Bulan Terakhir)
+                        <i class="fas fa-chart-line me-1"></i> Tren Penjualan
+                        @if(request('trend_period') == 'week')
+                            <small>(Minggu Ini)</small>
+                        @elseif(request('trend_period') == 'month')
+                            <small>(Bulan Ini)</small>
+                        @elseif(request('trend_period') == 'year')
+                            <small>(Tahun Ini)</small>
+                        @else
+                            <small>(2 Bulan Terakhir)</small>
+                        @endif
                     </h6>
                 </div>
                 <div class="card-body">
+                    <!-- Filter untuk Tren Penjualan -->
+                    <div class="row mb-3">
+                                 <div class="col-12">
+                            <form method="GET" class="d-flex flex-wrap align-items-center gap-3">
+                                @foreach(request()->except(['trend_period', 'trend_start', 'trend_end']) as $key => $value)
+                                    <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                                @endforeach
+                                
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="submit" name="trend_period" value="week" class="btn btn-outline-primary {{ request('trend_period') == 'week' ? 'active' : '' }}">Minggu Ini</button>
+                                    <button type="submit" name="trend_period" value="month" class="btn btn-outline-primary {{ request('trend_period') == 'month' ? 'active' : '' }}">Bulan Ini</button>
+                                    <button type="submit" name="trend_period" value="year" class="btn btn-outline-primary {{ request('trend_period') == 'year' ? 'active' : '' }}">Tahun Ini</button>
+                                </div>
+                                
+                                {{-- <div class="d-flex align-items-center gap-2">
+                                    <input type="date" name="trend_start" class="form-control form-control-sm" style="width: 130px;" value="{{ request('trend_start') }}">
+                                    <input type="date" name="trend_end" class="form-control form-control-sm" style="width: 130px;" value="{{ request('trend_end') }}">
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-filter"></i> Terapkan
+                                </button> --}}
+                                
+                                @if(request('trend_period') || request('trend_start') || request('trend_end'))
+                                    <a href="?{{ http_build_query(request()->except(['trend_period', 'trend_start', 'trend_end'])) }}" class="btn btn-outline-danger btn-sm" title="Hapus filter">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                @endif
+                            </form>
+                        </div>
+                    </div>
+
                     <div class="chart-area" style="height: 300px;">
                         <canvas id="monthlyTrendChart"></canvas>
                     </div>

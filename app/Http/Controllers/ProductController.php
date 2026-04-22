@@ -35,7 +35,7 @@ class ProductController extends Controller
             $validated = $request->validate([
                 'supplier_id' => 'required|exists:suppliers,id',
                 'item_name' => 'required|string',
-                'price' => 'nullable|numeric|min:0',
+                'margin' => 'nullable|numeric|min:0',
                 'stock' => 'required|integer|min:1',
                 'detail' => 'nullable|string',
             ]);
@@ -95,5 +95,12 @@ class ProductController extends Controller
         );
 
         return response()->json(['exists' => $exists]);
+    }
+
+    public function getAvailableSupplierItems($supplierId)
+    {
+        $items = $this->productService->getAvailableSupplierItems($supplierId);
+
+        return response()->json($items);
     }
 }
