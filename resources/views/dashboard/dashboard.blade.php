@@ -112,7 +112,7 @@
          <!-- Grafik 1: Penjualan vs Pembelian -->
          <div class="col-xl-6 col-lg-12 mb-4">
              <div class="card shadow">
-                <div class="card-header py-3">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <h6 class="m-0 font-weight-bold text-primary">
                         Penjualan vs Pembelian
                 @if(request('start') && request('end'))
@@ -121,20 +121,28 @@
                             <small>(Semua Data)</small>
                 @endif
                     </h6>
+                    <button class="btn btn-sm btn-link text-decoration-none p-0 toggle-chart" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#collapsePenjualan"
+                        aria-expanded="true" aria-controls="collapsePenjualan">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
                 </div>
+                <div class="collapse show" id="collapsePenjualan">
                  <div class="card-body">
                      <div class="chart-area" style="height: 300px;">
                      <canvas id="salesPurchaseChart"></canvas>
                      </div>
                  </div>
+                </div>
              </div>
          </div>
 
         <!-- Grafik 2: Produk Terjual -->
         <div class="col-xl-6 col-lg-12 mb-4">
             <div class="card shadow">
-                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center flex-wrap">
                     <h6 class="m-0 font-weight-bold text-warning">Produk Terjual per Bulan</h6>
+                    <div class="d-flex align-items-center gap-2">
                 <form method="GET" class="d-inline">
                         @if(request('start'))
                             <input type="hidden" name="start" value="{{ request('start') }}">
@@ -150,11 +158,19 @@
                         @endforeach
                     </select>
                 </form>
+                        <button class="btn btn-sm btn-link text-decoration-none p-0 toggle-chart" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#collapseProduk"
+                            aria-expanded="true" aria-controls="collapseProduk">
+                            <i class="fas fa-chevron-up"></i>
+                        </button>
+                    </div>
             </div>
+                <div class="collapse show" id="collapseProduk">
                 <div class="card-body">
                     <div class="chart-bar" style="height: 300px;">
                     <canvas id="productSoldChart"></canvas>
                     </div>
+                </div>
                 </div>
             </div>
         </div>
@@ -165,15 +181,22 @@
         <!-- Top Products Bar Chart -->
         <div class="col-xl-6 col-lg-12 mb-4">
             <div class="card shadow">
-                <div class="card-header py-3">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <h6 class="m-0 font-weight-bold text-success">
                         <i class="fas fa-trophy me-1"></i> Top 10 Produk Terlaris
                     </h6>
+                    <button class="btn btn-sm btn-link text-decoration-none p-0 toggle-chart" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#collapseTop"
+                        aria-expanded="true" aria-controls="collapseTop">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
                 </div>
+                <div class="collapse show" id="collapseTop">
                 <div class="card-body">
                     <div class="chart-bar" style="height: 300px;">
                         <canvas id="topProductsChart"></canvas>
                     </div>
+                </div>
                 </div>
             </div>
         </div>
@@ -181,7 +204,7 @@
         <!-- Monthly Sales Trend -->
         <div class="col-xl-6 col-lg-12 mb-4">
             <div class="card shadow">
-                <div class="card-header py-3">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <h6 class="m-0 font-weight-bold text-info">
                         <i class="fas fa-chart-line me-1"></i> Tren Penjualan
                         @if(request('trend_period') == 'week')
@@ -194,7 +217,13 @@
                             <small>(2 Bulan Terakhir)</small>
                         @endif
                     </h6>
+                    <button class="btn btn-sm btn-link text-decoration-none p-0 toggle-chart" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#collapseTren"
+                        aria-expanded="true" aria-controls="collapseTren">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
                 </div>
+                <div class="collapse show" id="collapseTren">
                 <div class="card-body">
                     <!-- Filter untuk Tren Penjualan -->
                     <div class="row mb-3">
@@ -232,6 +261,7 @@
                         <canvas id="monthlyTrendChart"></canvas>
                     </div>
                 </div>
+                </div>
             </div>
         </div>
     </div>
@@ -241,15 +271,17 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    const chartInstances = {};
+
     const ctx1 = document.getElementById('salesPurchaseChart').getContext('2d');
-    new Chart(ctx1, {
+    chartInstances.salesPurchaseChart = new Chart(ctx1, {
         type: 'line',
-        data: {  // ✅ Tambahkan "data:"
+        data: {
             labels: @json($label_harian),
             datasets: [
                 {
                     label: 'Penjualan (Rp)',
-                    data: @json($penjualan_harian),  // ✅ tambahkan "data:"
+                    data: @json($penjualan_harian),
                     borderColor: '#4e73df',
                     backgroundColor: 'rgba(78, 115, 223, 0.05)',
                     borderWidth: 2,
@@ -258,7 +290,7 @@
                 },
                 {
                     label: 'Pembelian (Rp)',
-                    data: @json($pembelian_harian),  // ✅ tambahkan "data:"
+                    data: @json($pembelian_harian),
                     borderColor: '#e74a3b',
                     backgroundColor: 'rgba(231, 74, 59, 0.05)',
                     borderWidth: 2,
@@ -286,15 +318,14 @@
         }
     });
 
-    // Grafik 2: Produk Terjual per Bulan
     const ctx2 = document.getElementById('productSoldChart').getContext('2d');
-    new Chart(ctx2, {
+    chartInstances.productSoldChart = new Chart(ctx2, {
         type: 'bar',
-        data: {  // ✅ Tambahkan "data:"
+        data: {
             labels: @json($bulan_produk),
             datasets: [{
                 label: 'Jumlah Produk Terjual',
-                data: @json($data_produk),  // ✅ tambahkan "data:"
+                data: @json($data_produk),
                 backgroundColor: 'rgba(246, 194, 60, 0.7)',
                 borderColor: '#f6c23e',
                 borderWidth: 1
@@ -323,9 +354,8 @@
         }
     });
 
-    // Grafik 3: Top 10 Products
     const ctx3 = document.getElementById('topProductsChart').getContext('2d');
-    new Chart(ctx3, {
+    chartInstances.topProductsChart = new Chart(ctx3, {
         type: 'bar',
         data: {
             labels: @json($products),
@@ -376,9 +406,8 @@
         }
     });
 
-    // Grafik 4: Monthly Sales Trend
     const ctx4 = document.getElementById('monthlyTrendChart').getContext('2d');
-    new Chart(ctx4, {
+    chartInstances.monthlyTrendChart = new Chart(ctx4, {
         type: 'line',
         data: {
             labels: @json($labels),
@@ -424,6 +453,35 @@
                 }
             }
         }
+    });
+
+    // Toggle collapse: resize chart + rotate chevron
+    document.querySelectorAll('.collapse').forEach(function (el) {
+        el.addEventListener('shown.bs.collapse', function () {
+            const canvas = this.querySelector('canvas');
+            if (canvas && canvas.id && chartInstances[canvas.id]) {
+                chartInstances[canvas.id].resize();
+            }
+            const btn = document.querySelector('[data-bs-target="#' + this.id + '"]');
+            if (btn) {
+                const icon = btn.querySelector('i');
+                if (icon) {
+                    icon.classList.remove('fa-chevron-down');
+                    icon.classList.add('fa-chevron-up');
+                }
+            }
+        });
+
+        el.addEventListener('hidden.bs.collapse', function () {
+            const btn = document.querySelector('[data-bs-target="#' + this.id + '"]');
+            if (btn) {
+                const icon = btn.querySelector('i');
+                if (icon) {
+                    icon.classList.remove('fa-chevron-up');
+                    icon.classList.add('fa-chevron-down');
+                }
+            }
+        });
     });
 </script>
 @endpush
