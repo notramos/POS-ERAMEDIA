@@ -75,16 +75,26 @@ class ProductService implements ProductServiceInterface
         }
     }
 
-    public function update($id, array $data): Product
+    public function update(int $id, array $data): Product
     {
+        Log::info("Updating product ID {$id} with data: ".json_encode($data));
         $product = Product::findOrFail($id);
+
+        $supplierItem = SupplierItem::where('supplier_id', $product->supplier_id)
+            ->where('name', $product->name)
+            ->first();
+
+        $margin = (float) ($data['margin'] ?? 0);
+        $purchasePrice = $supplierItem?->price ?? 0;
+        $newPrice = $purchasePrice + $margin;
+
         $oldStock = $product->stock;
         $newStock = $data['stock'];
         $diff = $newStock - $oldStock;
 
         if ($diff === 0) {
             $product->update([
-                'price' => $data['price'],
+                'price' => $newPrice,
                 'stock' => $newStock,
                 'detail' => $data['detail'] ?? $product->detail,
             ]);
@@ -95,10 +105,6 @@ class ProductService implements ProductServiceInterface
         DB::beginTransaction();
 
         try {
-            $supplierItem = SupplierItem::where('supplier_id', $product->supplier_id)
-                ->where('name', $product->name)
-                ->first();
-
             if ($diff > 0) {
                 if (! $supplierItem || $supplierItem->stok < $diff) {
                     throw new \Exception('Stok di supplier tidak mencukupi.');
@@ -111,7 +117,7 @@ class ProductService implements ProductServiceInterface
             }
 
             $product->update([
-                'price' => $data['price'],
+                'price' => $newPrice,
                 'stock' => $newStock,
                 'detail' => $data['detail'] ?? $product->detail,
             ]);
@@ -125,7 +131,7 @@ class ProductService implements ProductServiceInterface
         }
     }
 
-    public function delete($id): void
+    public function delete(int $id): void
     {
         $product = Product::findOrFail($id);
 
@@ -190,5 +196,32 @@ class ProductService implements ProductServiceInterface
                 'unit_id' => $item->unit_id,
                 'unit_name' => $item->unit?->name,
             ]);
+    }
+
+    public function restock(int $productId, int $quantity): Product
+    {
+        DB::beginTransaction();
+
+        try {
+            $product = Product::findOrFail($productId);
+
+            $supplierItem = SupplierItem::where('supplier_id', $product->supplier_id)
+                ->where('name', $product->name)
+                ->first();
+
+            if (! $supplierItem || $supplierItem->stok < $quantity) {
+                throw new \Exception('Stok di supplier tidak mencukupi untuk restock.');
+            }
+
+            $supplierItem->decrement('stok', $quantity);
+            $product->increment('stock', $quantity);
+
+            DB::commit();
+
+            return $product;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 }

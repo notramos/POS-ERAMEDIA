@@ -72,6 +72,8 @@ Route::middleware(['role:admin'])->group(function () {
     // Purchases
     Route::get('/purchases', [App\Http\Controllers\PurchaseController::class, 'index'])->name('purchase.purchase');
     Route::get('/purchases/create', [App\Http\Controllers\PurchaseController::class, 'create'])->name('pembelian.create');
+    Route::get('/purchases/supplier-items/{supplier}', [App\Http\Controllers\PurchaseController::class, 'getSupplierItems'])->name('pembelian.supplier-items');
+    Route::delete('/purchases/supplier-items/{supplierItem}', [App\Http\Controllers\PurchaseController::class, 'destroySupplierItem'])->name('pembelian.supplier-item.destroy');
     Route::post('/purchases', [App\Http\Controllers\PurchaseController::class, 'store'])->name('pembelian.store');
     Route::delete('/purchases/{purchase}', [App\Http\Controllers\PurchaseController::class, 'destroy'])->name('pembelian.destroy');
 });

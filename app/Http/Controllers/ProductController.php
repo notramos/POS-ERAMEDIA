@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Contracts\ProductServiceInterface;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ProductController extends Controller
 {
@@ -50,11 +51,12 @@ class ProductController extends Controller
         }
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id)
     {
+        Log::info("Received update request for product ID {$id} with data: ".json_encode($request->all()));
         try {
             $validated = $request->validate([
-                'price' => 'required|numeric|min:0',
+                'margin' => 'nullable|numeric|min:0',
                 'stock' => 'required|integer|min:0',
                 'detail' => 'nullable|string',
             ]);
@@ -69,7 +71,7 @@ class ProductController extends Controller
         }
     }
 
-    public function destroy($id)
+    public function destroy(int $id)
     {
         try {
             $this->productService->delete($id);
@@ -80,7 +82,7 @@ class ProductController extends Controller
         }
     }
 
-    public function getSupplierItems($supplierId)
+    public function getSupplierItems(int $supplierId)
     {
         $items = $this->productService->getSupplierItems($supplierId);
 
@@ -97,7 +99,7 @@ class ProductController extends Controller
         return response()->json(['exists' => $exists]);
     }
 
-    public function getAvailableSupplierItems($supplierId)
+    public function getAvailableSupplierItems(int $supplierId)
     {
         $items = $this->productService->getAvailableSupplierItems($supplierId);
 

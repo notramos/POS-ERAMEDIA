@@ -39,11 +39,22 @@
                             <td>{{ optional($product->supplier)->name ?? '–' }}</td>
                             <td>
                                 @if(optional(auth()->user()->role)->name === 'admin')
+                                    @php
+                                        $supplierItem = $product->supplier_id
+                                            ? \App\Models\SupplierItem::where('supplier_id', $product->supplier_id)
+                                                ->where('name', $product->name)
+                                                ->first()
+                                            : null;
+                                        $purchasePrice = $supplierItem?->price ?? 0;
+                                        $currentMargin = $product->price - $purchasePrice;
+                                    @endphp
                                     <button type="button" 
                                             class="btn btn-sm btn-warning btn-edit-product"
                                             data-id="{{ $product->id }}"
                                             data-name="{{ $product->name }}"
                                             data-price="{{ $product->price }}"
+                                            data-supplier-price="{{ $purchasePrice }}"
+                                            data-margin="{{ $currentMargin }}"
                                             data-stock="{{ $product->stock }}"
                                             data-detail="{{ $product->detail ?? '' }}"
                                             data-supplier-id="{{ $product->supplier_id }}">
@@ -105,7 +116,7 @@
                             </select>
                             <small class="d-block mt-1">
                                 <span class="text-muted">Stok Supplier: <span id="availableStock">–</span></span>
-                                <span class="text-muted"> | Harga Beli: <span id="purchasePrice">–</span></span>
+                                <span class="text-muted"> | Harga Beli: <span id="purchasePriceAdd">–</span></span>
                             </small>
                         </div>
                         <input type="hidden" name="supplier_id" id="selectedSupplierId">
@@ -114,12 +125,16 @@
                      <!-- Shared Fields -->
                      <input type="hidden" name="stock" id="productStock" value="1">
                      <div class="form-group">
+                        <label>Harga Beli (dari Supplier)</label>
+                        <div class="form-control" style="background-color: #e9ecef;" id="purchasePrice">–</div>
+                    </div>
+                     <div class="form-group">
                         <label>Margin (Rp) <span class="text-danger">*</span></label>
                         <input type="number" name="margin" id="productMargin" class="form-control" min="0" value="0">
                     </div>
                     <div class="form-group">
                         <label>Harga Jual (auto)</label>
-                        <div class="form-control" style="background-color: #e9ecef;" id="sellPriceDisplay">Rp 0</div>
+                        <div name="price" class="form-control" style="background-color: #e9ecef;" id="sellPriceDisplay">Rp 0</div>
                     </div>
                      <div class="form-group" id="detailField">
                          <label>Detail</label>
@@ -150,26 +165,31 @@ $(document).ready(function() {
         $('#productForm').attr('action', '/products/' + btn.data('id'));
         $('#addSection').hide();
 
+        purchasePrice = parseFloat(btn.data('supplier-price')) || 0;
+        $('#productMargin').val(parseFloat(btn.data('margin')) || 0);
         $('#productStock').val(btn.data('stock') || 0);
         $('#productDetail').val(btn.data('detail') || '');
+        $('#purchasePrice').text(purchasePrice ? 'Rp ' + purchasePrice.toLocaleString('id-ID') : '–');
+        updateSellPrice();
 
         $('#modalProduct').modal('show');
     });
 
-     // Reset form saat buka modal tambah
-     $('[data-target="#modalProduct"]').not('.btn-edit-product').on('click', function() {
-         $('#modalTitle').text('Tambah Produk');
-         $('#formMethod').val('POST');
-         $('#productForm').attr('action', "{{ route('products.store') }}");
-         $('#productForm')[0].reset();
-         $('#addSection').show();
-         $('#availableStock').text('–');
-         $('#purchasePrice').text('–');
-         $('#productMargin').val(0);
-         $('#productStock').val(1);
-         purchasePrice = 0;
-         updateSellPrice();
-     });
+    // Reset form saat buka modal tambah
+    $('[data-target="#modalProduct"]').not('.btn-edit-product').on('click', function() {
+        $('#modalTitle').text('Tambah Produk');
+        $('#formMethod').val('POST');
+        $('#productForm').attr('action', "{{ route('products.store') }}");
+        $('#productForm')[0].reset();
+        $('#addSection').show();
+        $('#availableStock').text('–');
+        $('#purchasePriceAdd').text('–');
+        $('#purchasePrice').text('–');
+        $('#productMargin').val(0);
+        $('#productStock').val(1);
+        purchasePrice = 0;
+        updateSellPrice();
+    });
 
     // Load barang saat pilih supplier - LOAD DATA tapi tidak auto-select
     $('#productSupplier').change(function() {
@@ -180,6 +200,7 @@ $(document).ready(function() {
         if (!supplierId) {
             select.empty().append('<option value="">-- Pilih Supplier --</option>').prop('disabled', true);
             $('#availableStock').text('–');
+            $('#purchasePriceAdd').text('–');
             $('#purchasePrice').text('–');
             purchasePrice = 0;
             updateSellPrice();
@@ -188,6 +209,7 @@ $(document).ready(function() {
         
         select.empty().append('<option value="">Memuat...</option>').prop('disabled', true);
         $('#availableStock').text('–');
+        $('#purchasePriceAdd').text('–');
         $('#purchasePrice').text('–');
         purchasePrice = 0;
         updateSellPrice();
@@ -234,6 +256,7 @@ $(document).ready(function() {
          
          purchasePrice = price;
          document.getElementById('availableStock').textContent = stock || '0';
+         document.getElementById('purchasePriceAdd').textContent = price ? `Rp ${price.toLocaleString('id-ID')}` : '–';
          document.getElementById('purchasePrice').textContent = price ? `Rp ${price.toLocaleString('id-ID')}` : '–';
          
          // Auto-set stock to available supplier stock
@@ -255,6 +278,7 @@ $(document).ready(function() {
                 $('#addSection').show();
                 $('#modalTitle').text('Tambah Produk');
                 $('#availableStock').text('–');
+                $('#purchasePriceAdd').text('–');
                 $('#purchasePrice').text('–');
                 $('#productStock').val(1);
                 purchasePrice = 0;

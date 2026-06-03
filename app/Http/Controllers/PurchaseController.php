@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Contracts\PurchaseServiceInterface;
+use App\Models\Supplier;
+use App\Models\SupplierItem;
 use App\Models\Unit;
 use Illuminate\Http\Request;
 
@@ -32,12 +34,28 @@ class PurchaseController extends Controller
     {
         $allSuppliers = $this->purchaseService->getSuppliers();
         $units = Unit::all();
-        $selectedSupplierId = old('supplier_id');
-        $supplierItems = $selectedSupplierId
-            ? $this->purchaseService->getSupplierItems($selectedSupplierId)
-            : collect();
 
-        return view('purchase.create', compact('allSuppliers', 'units', 'supplierItems', 'selectedSupplierId'));
+        return view('purchase.create', compact('allSuppliers', 'units'));
+    }
+
+    public function getSupplierItems(Supplier $supplier)
+    {
+        $supplierItems = $supplier->supplierItems()->with('unit')->get();
+        $units = Unit::all();
+
+        $html = view('purchase.partials.supplier-items', compact('supplierItems', 'units', 'supplier'))->render();
+
+        return response()->json(['html' => $html]);
+    }
+
+    public function destroySupplierItem(SupplierItem $supplierItem)
+    {
+        try {
+            $supplierItem->delete();
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
     }
 
     public function store(Request $request)

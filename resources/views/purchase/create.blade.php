@@ -21,12 +21,12 @@
                         <select name="supplier_id" id="supplier_id" class="form-control" required>
                             <option value="">-- Pilih Supplier --</option>
                             @foreach($allSuppliers as $supplier)
-                                <option value="{{ $supplier->id }}" {{ $selectedSupplierId == $supplier->id ? 'selected' : '' }}>
+                                <option value="{{ $supplier->id }}">
                                     {{ $supplier->name }}
                                 </option>
                             @endforeach
                         </select>
-                        <button type="submit" name="load_products" value="1" class="btn btn-outline-primary btn-sm">
+                        <button type="button" id="loadProductsBtn" class="btn btn-outline-primary btn-sm">
                             <i class="fas fa-sync"></i> Muat Barang
                         </button>
                     </div>
@@ -35,100 +35,155 @@
                     @enderror
             </div>
 
-            @if($selectedSupplierId)
-                    <hr class="my-4">
-
-                <!-- Barang dari Supplier -->
-                    <h5 class="font-weight-bold text-primary mb-3">
-                        <i class="fas fa-box-open"></i> Barang dari {{ $allSuppliers->firstWhere('id', $selectedSupplierId)?->name }}
-                    </h5>
-
-                        @if($supplierItems->isNotEmpty())
-                        <div class="row">
-                                        @foreach($supplierItems as $item)
-                                <div class="col-lg-6 mb-3">
-                                    <div class="card border-left-primary shadow-sm h-100 py-2">
-                                        <div class="card-body d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <div class="font-weight-bold text-gray-800">{{ $item->name }}</div>
-                                                <small class="text-muted">
-                                                    Harga: Rp {{ number_format($item->price, 0, ',', '.') }} |
-                                                    Satuan: {{ $item->unit?->name ?? '-' }}
-                                                </small>
-                                            </div>
-                                            <div class="d-flex align-items-center">
-                                                <div class="form-check mr-3">
-                                                            <input type="checkbox" 
-                                                                   name="items[{{ $item->id }}][use]" 
-                                                                   value="1" 
-                                                           class="form-check-input">
-                                                        </div>
-                                                        <input type="number" 
-                                                               name="items[{{ $item->id }}][quantity]" 
-                                                               placeholder="Qty" 
-                                                       class="form-control w-25" 
-                                                       min="1">
-                                                    </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                        @endforeach
-                            </div>
-                        @else
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle"></i> Belum ada barang terdaftar untuk supplier ini.
-                            </div>
-                        @endif
-
-                    <hr class="my-4">
-
-                <!-- Tambah Barang Baru -->
-                    <h5 class="font-weight-bold text-success mb-3">
-                        <i class="fas fa-plus-circle"></i> Tambah Barang Baru
-                    </h5>
-                    <div class="row g-3">
-                            <div class="col-md-4">
-                            <input type="text" name="new_items[0][name]" class="form-control" placeholder="Nama Barang" >
-                            </div>
-                            <div class="col-md-3">
-                            <input type="number" name="new_items[0][price]" class="form-control" placeholder="Harga (Rp)" min="0" step="0.01" >
-                            </div>
-                            <div class="col-md-2">
-                            <input type="number" name="new_items[0][quantity]" class="form-control" placeholder="Qty" min="1" >
-                            </div>
-                            <div class="col-md-2">
-                            <select name="new_items[0][unit_id]" class="form-control" >
-                                <option value="">Satuan</option>
-                                    @foreach($units as $unit)
-                                        <option value="{{ $unit->id }}">{{ $unit->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-        </div>
-
-                    <!-- Tanggal Pembelian -->
-                    <div class="form-group mt-4">
-                        <label for="purchase_date" class="font-weight-bold">Tanggal Pembelian</label>
-                            <input type="date" 
-                                   name="purchase_date" 
-                                   class="form-control" 
-                                   value="{{ old('purchase_date', date('Y-m-d')) }}" 
-                                   required>
-                        </div>
-
-                    <!-- Tombol Simpan -->
-                    <div class="mt-4">
-                        <button type="submit" class="btn btn-success btn-icon-split">
-                            <span class="icon text-white-50">
-                                <i class="fas fa-save"></i>
-                            </span>
-                            <span class="text">Simpan Pembelian</span>
-                            </button>
-                        </div>
-            @endif
+            <div id="supplier-items-container" style="display: none;">
+                <div id="supplier-items-content"></div>
+            </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Hapus Barang Supplier -->
+<div class="modal fade" id="deleteItemModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-body text-center py-5 px-4">
+                <div class="mb-4">
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-danger"
+                         style="width: 72px; height: 72px;">
+                        <i class="fas fa-trash-alt text-white" style="font-size: 28px;"></i>
+                    </div>
+                </div>
+                <h5 class="font-weight-bold mb-2">Hapus Barang Supplier</h5>
+                <p class="text-muted mb-1" style="font-size: 15px;">
+                    Yakin ingin menghapus
+                </p>
+                <p class="font-weight-bold text-danger mb-3" id="deleteItemName" style="font-size: 16px;"></p>
+                <p class="text-muted small mb-4">
+                    <i class="fas fa-info-circle"></i>
+                    Data pembelian yang sudah tercatat tidak akan terpengaruh.
+                </p>
+                <div class="d-flex justify-content-center gap-2">
+                    <button type="button" class="btn btn-outline-secondary px-4 py-2" id="cancelDeleteBtn" style="border-radius: 10px; font-weight: 500;">
+                        Batal
+                    </button>
+                    <button type="button" class="btn btn-danger px-4 py-2" id="confirmDeleteBtn" style="border-radius: 10px; font-weight: 500;">
+                        <span id="deleteBtnText">Ya, Hapus</span>
+                        <span id="deleteBtnSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 @endsection
 
+@push('scripts')
+<script>
+    var deleteItemId = null;
+
+    document.getElementById('loadProductsBtn').addEventListener('click', function() {
+        var supplierId = document.getElementById('supplier_id').value;
+        if (!supplierId) {
+            alert('Silakan pilih supplier terlebih dahulu.');
+            return;
+        }
+
+        var container = document.getElementById('supplier-items-container');
+        var content = document.getElementById('supplier-items-content');
+        var btn = this;
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memuat...';
+
+        fetch('{{ route("pembelian.supplier-items", "") }}/' + supplierId)
+            .then(function(res) {
+                if (!res.ok) throw new Error('Gagal memuat data');
+                return res.json();
+            })
+            .then(function(data) {
+                content.innerHTML = data.html;
+                container.style.display = 'block';
+            })
+            .catch(function(err) {
+                alert('Terjadi kesalahan: ' + err.message);
+            })
+            .finally(function() {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-sync"></i> Muat Barang';
+            });
+    });
+
+    // Event delegation: show delete confirmation modal
+    document.getElementById('supplier-items-content').addEventListener('click', function(e) {
+        var btn = e.target.closest('.delete-supplier-item');
+        if (!btn) return;
+
+        deleteItemId = btn.dataset.id;
+        document.getElementById('deleteItemName').textContent = '"' + btn.dataset.name + '"';
+        $('#deleteItemModal').modal('show');
+    });
+
+    // Cancel button
+    document.getElementById('cancelDeleteBtn').addEventListener('click', function() {
+        $('#deleteItemModal').modal('hide');
+    });
+
+    // Confirm delete
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+        if (!deleteItemId) return;
+
+        var confirmBtn = this;
+        var btnText = document.getElementById('deleteBtnText');
+        var spinner = document.getElementById('deleteBtnSpinner');
+
+        confirmBtn.disabled = true;
+        btnText.textContent = 'Menghapus...';
+        spinner.classList.remove('d-none');
+
+        fetch('{{ route("pembelian.supplier-item.destroy", "") }}/' + deleteItemId, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        })
+        .then(function(res) {
+            if (!res.ok) throw new Error('Gagal menghapus barang');
+            return res.json();
+        })
+        .then(function() {
+            $('#deleteItemModal').modal('hide');
+
+            var card = document.querySelector('.delete-supplier-item[data-id="' + deleteItemId + '"]');
+            if (card) {
+                var col = card.closest('.col-lg-6');
+                if (col) {
+                    col.style.transition = 'all .3s ease';
+                    col.style.opacity = '0';
+                    col.style.transform = 'scale(0.95)';
+                    setTimeout(function() {
+                        col.remove();
+                        if (typeof createToast === 'function') {
+                            createToast('success', 'Barang berhasil dihapus dari supplier.');
+                        }
+                    }, 300);
+                }
+            }
+        })
+        .catch(function(err) {
+            $('#deleteItemModal').modal('hide');
+            if (typeof createToast === 'function') {
+                createToast('error', err.message);
+            } else {
+                alert('Gagal menghapus: ' + err.message);
+            }
+        })
+        .finally(function() {
+            confirmBtn.disabled = false;
+            btnText.textContent = 'Ya, Hapus';
+            spinner.classList.add('d-none');
+            deleteItemId = null;
+        });
+    });
+</script>
+@endpush
